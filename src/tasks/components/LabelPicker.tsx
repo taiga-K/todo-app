@@ -1,5 +1,6 @@
 import { CheckIcon, SearchIcon, TagIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { Tag } from "wasp/entities";
 import { createTag, getTags, useQuery } from "wasp/client/operations";
 import { Input } from "../../components/ui/input";
 import {
@@ -18,13 +19,29 @@ interface LabelPickerProps {
 }
 
 export function LabelPicker({ value, onChange }: LabelPickerProps) {
-  const { data: tags = [] } = useQuery(getTags);
+  const { data: queriedTags = [] } = useQuery(getTags);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  // Keep freshly created tags until getTags refetch includes them.
+  const [createdTags, setCreatedTags] = useState<Tag[]>([]);
+
+  const tags = useMemo(() => {
+    const byId = new Map<string, Tag>();
+    for (const tag of queriedTags) {
+      byId.set(tag.id, tag);
+    }
+    for (const tag of createdTags) {
+      byId.set(tag.id, tag);
+    }
+    return [...byId.values()];
+  }, [queriedTags, createdTags]);
 
   const selectedTags = useMemo(
-    () => tags.filter((tag) => value.includes(tag.id)),
+    () =>
+      value
+        .map((id) => tags.find((tag) => tag.id === id))
+        .filter((tag): tag is Tag => tag !== undefined),
     [tags, value],
   );
 
@@ -62,6 +79,7 @@ export function LabelPicker({ value, onChange }: LabelPickerProps) {
         name,
         color: generateBrightColor(),
       });
+      setCreatedTags((prev) => [...prev, tag]);
       onChange([...value, tag.id]);
       setQuery("");
     } catch (err: unknown) {

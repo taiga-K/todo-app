@@ -14,24 +14,31 @@ export const createTag: CreateTag<CreateTagArgs, Tag> = async (tag, context) => 
     throw new HttpError(400, "ラベル名を入力してください。");
   }
 
-  const existingTags = await context.entities.Tag.findMany({
-    where: { user: { id: context.user.id } },
-    select: { name: true },
-  });
-  const normalizedName = name.toLowerCase();
-  if (existingTags.some((existing) => existing.name.toLowerCase() === normalizedName)) {
-    throw new HttpError(409, "同じ名前のラベルが既に存在します。");
-  }
+  const nameNormalized = name.toLowerCase();
 
-  return context.entities.Tag.create({
-    data: {
-      name,
-      color: tag.color,
-      user: {
-        connect: {
-          id: context.user.id,
+  try {
+    return await context.entities.Tag.create({
+      data: {
+        name,
+        nameNormalized,
+        color: tag.color,
+        user: {
+          connect: {
+            id: context.user.id,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (err: unknown) {
+    // Unique constraint on (userId, nameNormalized) — including concurrent creates.
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code: unknown }).code === "P2002"
+    ) {
+      throw new HttpError(409, "同じ名前のラベルが既に存在します。");
+    }
+    throw err;
+  }
 };
