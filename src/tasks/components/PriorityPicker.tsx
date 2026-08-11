@@ -25,11 +25,7 @@ export function PriorityPicker({ value, onChange }: PriorityPickerProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <PropertyChip
-            active={Boolean(value)}
-            aria-label="優先度を設定"
-            className={cn(value && priorityMeta[value].colorClass)}
-          />
+          <PropertyChip active={Boolean(value)} aria-label="優先度を設定" />
         }
       >
         <PriorityIcon priority={value} className="size-3.5" />
@@ -48,7 +44,7 @@ export function PriorityPicker({ value, onChange }: PriorityPickerProps) {
               key={priority}
               type="button"
               className={cn(
-                "flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1 text-left text-xs transition-colors duration-150 hover:bg-muted/70",
+                "flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1 text-left text-caption transition-colors duration-150 hover:bg-muted/70",
                 selected && "bg-muted/60",
               )}
               onClick={() => {
@@ -58,7 +54,7 @@ export function PriorityPicker({ value, onChange }: PriorityPickerProps) {
             >
               <PriorityIcon priority={priority} className="size-3.5" />
               <span className="flex-1">{meta.label}</span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 {meta.shortcut}
               </span>
             </button>

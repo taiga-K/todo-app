@@ -15,10 +15,10 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold tracking-tight">ログイン</h2>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-phi-5">
+        <div className="flex flex-col gap-phi-2">
+          <h2 className="text-h2 font-semibold tracking-tight">ログイン</h2>
+          <p className="text-caption text-muted-foreground">
             アカウントにサインインしてください。
           </p>
         </div>
@@ -33,9 +33,9 @@ export function LoginPage() {
               { onSuccess: () => navigate("/") },
             )
           }
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-phi-4"
         >
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="login-email">メールアドレス</Label>
             <Input
               id="login-email"
@@ -47,7 +47,7 @@ export function LoginPage() {
               disabled={isLoading}
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="login-password">パスワード</Label>
             <Input
               id="login-password"
@@ -61,7 +61,7 @@ export function LoginPage() {
           </div>
 
           {error ? (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-caption text-destructive" role="alert">
               {error}
             </p>
           ) : null}
@@ -71,7 +71,7 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+        <div className="flex flex-col gap-phi-3 text-caption text-muted-foreground">
           <p>
             アカウントをお持ちでない方は{" "}
             <Link

@@ -124,7 +124,7 @@ export function LabelPicker({ value, onChange }: LabelPickerProps) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="ラベルを検索または作成"
-            className="h-8 rounded-[4px] border-0 bg-muted/50 pl-7 text-xs shadow-none focus-visible:ring-1"
+            className="h-8 rounded-[4px] border-0 bg-muted/50 pl-7 text-caption shadow-none focus-visible:ring-1"
             autoFocus
           />
         </div>
@@ -142,12 +142,7 @@ export function LabelPicker({ value, onChange }: LabelPickerProps) {
                   )}
                   onClick={() => toggleTag(tag.id)}
                 >
-                  <TagLabel
-                    tag={tag}
-                    isActive={true}
-                    size="tiny"
-                    showColorCircle
-                  />
+                  <TagLabel tag={tag} />
                   {selected ? (
                     <CheckIcon className="ml-auto size-3 text-muted-foreground" />
                   ) : null}
@@ -161,7 +156,7 @@ export function LabelPicker({ value, onChange }: LabelPickerProps) {
               <button
                 type="button"
                 disabled={isCreating}
-                className="flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1 text-left text-xs transition-colors duration-150 hover:bg-muted/70 disabled:opacity-50"
+                className="flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-[4px] px-2 py-1 text-left text-caption transition-colors duration-150 hover:bg-muted/70 disabled:opacity-50"
                 onClick={handleCreate}
               >
                 <span className="text-muted-foreground">作成</span>
@@ -171,7 +166,7 @@ export function LabelPicker({ value, onChange }: LabelPickerProps) {
           ) : null}
 
           {filteredTags.length === 0 && !canCreate ? (
-            <li className="px-2 py-2 text-xs text-muted-foreground">
+            <li className="px-2 py-2 text-caption text-muted-foreground">
               ラベルが見つかりません。
             </li>
           ) : null}
