@@ -1,0 +1,12 @@
+{
+  "name": "todo-app",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @todo-app/web",
+    "build:web": "npm run build -w @todo-app/web",
+    "dev:api": "go -C apps/api run ./cmd/api"
+  }
+}
