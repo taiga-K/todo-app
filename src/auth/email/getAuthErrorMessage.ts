@@ -7,28 +7,34 @@ function readStringProp(value: unknown, key: string): string | null {
   return typeof prop === "string" ? prop : null;
 }
 
-const KNOWN_AUTH_ERROR_MESSAGES: Record<string, string> = {
-  "invalid credentials":
-    "メールアドレスまたはパスワードが正しくありません。",
-  "user with the same identity already exists":
-    "このメールアドレスは既に登録されています。",
-  "email must be present": "メールアドレスを入力してください。",
-  "email must be a valid email": "有効なメールアドレスを入力してください。",
-  "password must be present": "パスワードを入力してください。",
-  "password must be at least 8 characters":
-    "パスワードは8文字以上で入力してください。",
-  "password must contain a number":
-    "パスワードには数字を1文字以上含めてください。",
-  "token must be present": "トークンが見つかりません。メール内のリンクを確認してください。",
-  "email verification failed, invalid token":
-    "メール認証に失敗しました。リンクが無効か期限切れの可能性があります。",
-  "password reset failed, invalid token":
-    "パスワード再設定に失敗しました。リンクが無効か期限切れの可能性があります。",
-  "failed to send email verification email.":
-    "確認メールの送信に失敗しました。しばらくしてから再度お試しください。",
-  "failed to send password reset email.":
-    "パスワード再設定メールの送信に失敗しました。しばらくしてから再度お試しください。",
-};
+// Null-prototype map so lookups never return inherited Object properties.
+const KNOWN_AUTH_ERROR_MESSAGES: Record<string, string> = Object.assign(
+  Object.create(null),
+  {
+    "invalid credentials":
+      "メールアドレスまたはパスワードが正しくありません。",
+    // Intentionally omit "user with the same identity already exists":
+    // a distinct client message would enable account enumeration. Wasp already
+    // returns success for verified existing emails on signup.
+    "email must be present": "メールアドレスを入力してください。",
+    "email must be a valid email": "有効なメールアドレスを入力してください。",
+    "password must be present": "パスワードを入力してください。",
+    "password must be at least 8 characters":
+      "パスワードは8文字以上で入力してください。",
+    "password must contain a number":
+      "パスワードには数字を1文字以上含めてください。",
+    "token must be present":
+      "トークンが見つかりません。メール内のリンクを確認してください。",
+    "email verification failed, invalid token":
+      "メール認証に失敗しました。リンクが無効か期限切れの可能性があります。",
+    "password reset failed, invalid token":
+      "パスワード再設定に失敗しました。リンクが無効か期限切れの可能性があります。",
+    "failed to send email verification email.":
+      "確認メールの送信に失敗しました。しばらくしてから再度お試しください。",
+    "failed to send password reset email.":
+      "パスワード再設定メールの送信に失敗しました。しばらくしてから再度お試しください。",
+  },
+);
 
 const RATE_LIMIT_MESSAGE =
   /^please wait (\d+) secs before trying again\.?$/i;
@@ -65,7 +71,7 @@ function collectErrorMessages(error: unknown): string[] {
 
 function translateAuthMessage(message: string): string | null {
   const known = KNOWN_AUTH_ERROR_MESSAGES[message.toLowerCase()];
-  if (known) {
+  if (typeof known === "string") {
     return known;
   }
 
