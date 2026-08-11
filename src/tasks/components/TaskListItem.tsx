@@ -17,13 +17,27 @@ interface TaskListItemProps {
 export function TaskListItem({ task }: TaskListItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(task.description);
+  // Keep the committed title visible until getTasks refreshes the cache.
+  const [optimisticDescription, setOptimisticDescription] = useState<
+    string | null
+  >(null);
   const skipCommitRef = useRef(false);
+  const displayedDescription = optimisticDescription ?? task.description;
+
+  useEffect(() => {
+    if (
+      optimisticDescription !== null &&
+      task.description === optimisticDescription
+    ) {
+      setOptimisticDescription(null);
+    }
+  }, [task.description, optimisticDescription]);
 
   useEffect(() => {
     if (!isEditing) {
-      setDraft(task.description);
+      setDraft(displayedDescription);
     }
-  }, [task.description, isEditing]);
+  }, [displayedDescription, isEditing]);
 
   async function setTaskDone(isDone: boolean): Promise<void> {
     try {
@@ -39,20 +53,22 @@ export function TaskListItem({ task }: TaskListItemProps) {
   async function commitDescription(): Promise<void> {
     if (skipCommitRef.current) {
       skipCommitRef.current = false;
-      setDraft(task.description);
+      setDraft(displayedDescription);
       setIsEditing(false);
       return;
     }
 
     const next = draft.trim();
-    if (!next || next === task.description) {
-      setDraft(task.description);
+    if (!next || next === displayedDescription) {
+      setDraft(displayedDescription);
       setIsEditing(false);
       return;
     }
 
     // Exit edit mode before awaiting so later keystrokes are not overwritten
-    // by a stale in-flight save of the blur-time value.
+    // by a stale in-flight save of the blur-time value. Show the new title
+    // immediately while the tasks query cache catches up.
+    setOptimisticDescription(next);
     setIsEditing(false);
     try {
       await updateTask({
@@ -60,6 +76,7 @@ export function TaskListItem({ task }: TaskListItemProps) {
         description: next,
       });
     } catch (err: unknown) {
+      setOptimisticDescription(null);
       setDraft(next);
       setIsEditing(true);
       window.alert(`タスク名の更新中にエラーが発生しました: ${String(err)}`);
@@ -81,7 +98,7 @@ export function TaskListItem({ task }: TaskListItemProps) {
         <Checkbox
           checked={task.isDone}
           onCheckedChange={(checked) => setTaskDone(checked === true)}
-          aria-label={task.description}
+          aria-label={displayedDescription}
           className="mt-phi-1 cursor-pointer rounded-full after:inset-0"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-phi-2">
@@ -116,7 +133,7 @@ export function TaskListItem({ task }: TaskListItemProps) {
                 task.isDone && "text-muted-foreground line-through",
               )}
             >
-              {task.description}
+              {displayedDescription}
             </button>
           )}
           {(priority || dueLabel || task.tags.length > 0) && (
