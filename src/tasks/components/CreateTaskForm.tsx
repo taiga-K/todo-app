@@ -1,30 +1,48 @@
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { createTask } from "wasp/client/operations";
 import { Input } from "../../components/ui/input";
+import { toDueDate } from "../dueDate";
+import { TaskPriority } from "../priority";
+import { DueDatePicker } from "./DueDatePicker";
+import { LabelPicker } from "./LabelPicker";
+import { PriorityPicker } from "./PriorityPicker";
 
 interface CreateTaskFormValues {
   description: string;
+  tagIds: string[];
+  priority: TaskPriority | null;
+  due: Date | null;
 }
 
 export function CreateTaskForm() {
-  const { handleSubmit, control, reset } = useForm<CreateTaskFormValues>({
-    defaultValues: {
-      description: "",
-    },
-  });
+  const { handleSubmit, setValue, watch, control, reset } =
+    useForm<CreateTaskFormValues>({
+      defaultValues: {
+        description: "",
+        tagIds: [],
+        priority: null,
+        due: null,
+      },
+    });
 
   const onSubmit: SubmitHandler<CreateTaskFormValues> = async (data, event) => {
     event?.stopPropagation();
 
     try {
+      const dueAt = toDueDate(data.due);
       await createTask({
         description: data.description,
+        tagIds: data.tagIds,
+        priority: data.priority,
+        dueAt: dueAt ? dueAt.toISOString() : null,
       });
       reset();
     } catch (err: unknown) {
       window.alert(`タスクの作成中にエラーが発生しました: ${String(err)}`);
     }
   };
+
+  const [tagIds, priority, due] = watch(["tagIds", "priority", "due"]);
 
   return (
     <form
@@ -56,10 +74,26 @@ export function CreateTaskForm() {
         )}
       />
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center gap-2">
+        <DueDatePicker
+          value={due}
+          onChange={(nextDue) => setValue("due", nextDue, { shouldDirty: true })}
+        />
+        <PriorityPicker
+          value={priority}
+          onChange={(nextPriority) =>
+            setValue("priority", nextPriority, { shouldDirty: true })
+          }
+        />
+        <LabelPicker
+          value={tagIds}
+          onChange={(nextTagIds) =>
+            setValue("tagIds", nextTagIds, { shouldDirty: true })
+          }
+        />
         <button
           type="submit"
-          className="cursor-pointer rounded-[4px] px-2 py-1 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
+          className="ml-auto cursor-pointer rounded-[4px] px-2 py-1 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
         >
           追加
         </button>
