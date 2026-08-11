@@ -8,8 +8,30 @@ function readStringProp(value: unknown, key: string): string | null {
 }
 
 const KNOWN_AUTH_ERROR_MESSAGES: Record<string, string> = {
-  "invalid credentials": "メールアドレスまたはパスワードが正しくありません。",
+  "invalid credentials":
+    "メールアドレスまたはパスワードが正しくありません。",
+  "user with the same identity already exists":
+    "このメールアドレスは既に登録されています。",
+  "email must be present": "メールアドレスを入力してください。",
+  "email must be a valid email": "有効なメールアドレスを入力してください。",
+  "password must be present": "パスワードを入力してください。",
+  "password must be at least 8 characters":
+    "パスワードは8文字以上で入力してください。",
+  "password must contain a number":
+    "パスワードには数字を1文字以上含めてください。",
+  "token must be present": "トークンが見つかりません。メール内のリンクを確認してください。",
+  "email verification failed, invalid token":
+    "メール認証に失敗しました。リンクが無効か期限切れの可能性があります。",
+  "password reset failed, invalid token":
+    "パスワード再設定に失敗しました。リンクが無効か期限切れの可能性があります。",
+  "failed to send email verification email.":
+    "確認メールの送信に失敗しました。しばらくしてから再度お試しください。",
+  "failed to send password reset email.":
+    "パスワード再設定メールの送信に失敗しました。しばらくしてから再度お試しください。",
 };
+
+const RATE_LIMIT_MESSAGE =
+  /^please wait (\d+) secs before trying again\.?$/i;
 
 function collectErrorMessages(error: unknown): string[] {
   const messages: string[] = [];
@@ -22,6 +44,13 @@ function collectErrorMessages(error: unknown): string[] {
     typeof error === "object" && error !== null && "data" in error
       ? (error as { data: unknown }).data
       : null;
+
+  // WaspHttpError.data is the API JSON body: { message, data }.
+  const bodyMessage = readStringProp(data, "message");
+  if (bodyMessage) {
+    messages.push(bodyMessage);
+  }
+
   const nestedData =
     typeof data === "object" && data !== null && "data" in data
       ? (data as { data: unknown }).data
@@ -34,9 +63,23 @@ function collectErrorMessages(error: unknown): string[] {
   return messages;
 }
 
+function translateAuthMessage(message: string): string | null {
+  const known = KNOWN_AUTH_ERROR_MESSAGES[message.toLowerCase()];
+  if (known) {
+    return known;
+  }
+
+  const rateLimit = message.match(RATE_LIMIT_MESSAGE);
+  if (rateLimit) {
+    return `短時間にリクエストが集中しています。${rateLimit[1]}秒後に再度お試しください。`;
+  }
+
+  return null;
+}
+
 export function getAuthErrorMessage(error: unknown): string {
   for (const message of collectErrorMessages(error)) {
-    const translated = KNOWN_AUTH_ERROR_MESSAGES[message.toLowerCase()];
+    const translated = translateAuthMessage(message);
     if (translated) {
       return translated;
     }
