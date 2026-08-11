@@ -23,17 +23,19 @@ export function TaskListItem({ task }: TaskListItemProps) {
   >(null);
   const skipCommitRef = useRef(false);
   const commitGenerationRef = useRef(0);
-  const serverDescriptionRef = useRef(task.description);
   const displayedDescription = optimisticDescription ?? task.description;
 
   useEffect(() => {
-    // Any server description change means the cache caught up (or diverged);
-    // drop optimism so we never mask a different persisted value.
-    if (serverDescriptionRef.current !== task.description) {
-      serverDescriptionRef.current = task.description;
+    // Only drop optimism when the cache has caught up to this value.
+    // Clearing on any server change would let a stale earlier refetch wipe a
+    // newer in-flight optimistic title.
+    if (
+      optimisticDescription !== null &&
+      task.description === optimisticDescription
+    ) {
       setOptimisticDescription(null);
     }
-  }, [task.description]);
+  }, [task.description, optimisticDescription]);
 
   useEffect(() => {
     if (!isEditing) {
