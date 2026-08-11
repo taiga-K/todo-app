@@ -13,12 +13,12 @@ export function RequestPasswordResetPage() {
 
   return (
     <AuthLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold tracking-tight">
+      <div className="flex flex-col gap-phi-5">
+        <div className="flex flex-col gap-phi-2">
+          <h2 className="text-h2 font-semibold tracking-tight">
             パスワードを忘れた場合
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-caption text-muted-foreground">
             登録済みのメールアドレスを入力すると、再設定用のリンクを送ります。
           </p>
         </div>
@@ -37,9 +37,9 @@ export function RequestPasswordResetPage() {
               },
             )
           }
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-phi-4"
         >
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="reset-request-email">メールアドレス</Label>
             <Input
               id="reset-request-email"
@@ -53,12 +53,12 @@ export function RequestPasswordResetPage() {
           </div>
 
           {error ? (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-caption text-destructive" role="alert">
               {error}
             </p>
           ) : null}
           {success ? (
-            <p className="text-sm text-foreground" role="status">
+            <p className="text-caption text-foreground" role="status">
               {success}
             </p>
           ) : null}
@@ -68,7 +68,7 @@ export function RequestPasswordResetPage() {
           </Button>
         </form>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           <Link
             to="/login"
             className="font-medium text-foreground underline underline-offset-4"

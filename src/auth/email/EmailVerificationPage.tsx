@@ -62,13 +62,13 @@ export function EmailVerificationPage() {
 
   return (
     <AuthLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold tracking-tight">メール認証</h2>
+      <div className="flex flex-col gap-phi-5">
+        <div className="flex flex-col gap-phi-2">
+          <h2 className="text-h2 font-semibold tracking-tight">メール認証</h2>
           <VerificationMessage state={state} />
         </div>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           問題なければ{" "}
           <Link
             to="/login"
@@ -86,17 +86,17 @@ function VerificationMessage({ state }: { state: VerificationState }) {
   switch (state.status) {
     case "loading":
       return (
-        <p className="text-sm text-muted-foreground">認証を確認しています...</p>
+        <p className="text-caption text-muted-foreground">認証を確認しています...</p>
       );
     case "success":
       return (
-        <p className="text-sm text-foreground" role="status">
+        <p className="text-caption text-foreground" role="status">
           メールアドレスの認証が完了しました。
         </p>
       );
     case "error":
       return (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-caption text-destructive" role="alert">
           {state.message}
         </p>
       );

@@ -22,12 +22,12 @@ export function PasswordResetPage() {
 
   return (
     <AuthLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold tracking-tight">
+      <div className="flex flex-col gap-phi-5">
+        <div className="flex flex-col gap-phi-2">
+          <h2 className="text-h2 font-semibold tracking-tight">
             パスワードを再設定
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-caption text-muted-foreground">
             新しいパスワードを入力してください。
           </p>
         </div>
@@ -61,9 +61,9 @@ export function PasswordResetPage() {
               },
             );
           }}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-phi-4"
         >
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="reset-password">新しいパスワード</Label>
             <Input
               id="reset-password"
@@ -75,7 +75,7 @@ export function PasswordResetPage() {
               disabled={isLoading}
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="reset-password-confirm">
               新しいパスワード（確認）
             </Label>
@@ -91,12 +91,12 @@ export function PasswordResetPage() {
           </div>
 
           {error ? (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-caption text-destructive" role="alert">
               {error}
             </p>
           ) : null}
           {success ? (
-            <p className="text-sm text-foreground" role="status">
+            <p className="text-caption text-foreground" role="status">
               {success}
             </p>
           ) : null}
@@ -106,7 +106,7 @@ export function PasswordResetPage() {
           </Button>
         </form>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           問題なければ{" "}
           <Link
             to="/login"

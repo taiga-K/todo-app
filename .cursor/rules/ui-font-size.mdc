@@ -1,0 +1,41 @@
+---
+description: デスクトップ向けフォントサイズスケールを統一する
+alwaysApply: true
+---
+
+# UI フォントサイズ（Desktop）
+
+このアプリはデスクトップ向け。文字サイズは次のスケールとトークンだけを使う。定義は `src/App.css` の `@theme` / `@utility`。
+
+| 用途 | 許容範囲 | 採用値 | トークン |
+|---|---|---|---|
+| 本文 | 16px（基準） | 16px | `text-body` |
+| H1 | 32–36px | 34px | `text-h1` |
+| H2 | 24–30px | 28px | `text-h2` |
+| H3 | 20–24px | 22px | `text-h3` |
+| ボタン | 14–16px | 14px | `text-button` |
+| キャプション / ヒント | 12–14px | 13px | `text-caption` |
+
+## 使い分け
+
+- タスク名など主文: `text-body`
+- ページ見出し: `text-h1` / セクション見出し: `text-h2` / 小見出し: `text-h3`
+- 通常ボタン・「追加」など: `text-button`
+- 期限・優先度・ラベル、フォーム補助、エラー/ヒント: `text-caption`
+- ヘッダーのブランド名はページ H1 ではないので `text-h2`（セマンティクスは見出しタグにしない）
+
+```tsx
+// ❌ BAD — 任意サイズやトークン外ユーティリティ
+<p className="text-[15px]" />
+<span className="text-xs text-muted-foreground" />
+
+// ✅ GOOD — スケールトークン
+<p className="text-body" />
+<span className="text-caption text-muted-foreground" />
+<button className="text-button" />
+```
+
+## 注意
+
+- `cn()` / `tailwind-merge` 利用時は、カスタム `text-*` サイズを `src/lib/utils.ts` の `font-size` グループに登録すること。未登録だと `text-muted-foreground` など色クラスと衝突してサイズが消える
+- 可読性や既存コンポーネント契約と衝突する場合は、許容範囲内で調整し、範囲外の独自サイズは追加しない

@@ -47,7 +47,7 @@ export function CreateTaskForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex w-full flex-col gap-1 border-b border-border/70 pb-4"
+      className="flex w-full flex-col gap-phi-2 border-b border-border/70 pb-phi-4"
       id="create-task"
     >
       <Controller
@@ -57,16 +57,16 @@ export function CreateTaskForm() {
           required: { value: true, message: "タスク名を入力してください" },
         }}
         render={({ field, fieldState }) => (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-phi-2">
             <Input
               placeholder="新しいタスク"
               aria-invalid={fieldState.error ? true : undefined}
               aria-label="タスク名"
-              className="h-9 border-0 bg-transparent px-0 text-[15px] shadow-none placeholder:text-muted-foreground/70 focus-visible:border-transparent focus-visible:ring-0"
+              className="h-9 border-0 bg-transparent px-0 text-body shadow-none placeholder:text-muted-foreground/70 focus-visible:border-transparent focus-visible:ring-0"
               {...field}
             />
             {fieldState.error && (
-              <span className="text-xs text-destructive" role="alert">
+              <span className="text-caption text-destructive" role="alert">
                 {fieldState.error.message}
               </span>
             )}
@@ -74,7 +74,7 @@ export function CreateTaskForm() {
         )}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-phi-4 gap-y-phi-2">
         <DueDatePicker
           value={due}
           onChange={(nextDue) => setValue("due", nextDue, { shouldDirty: true })}
@@ -93,7 +93,7 @@ export function CreateTaskForm() {
         />
         <button
           type="submit"
-          className="ml-auto cursor-pointer rounded-[4px] px-2 py-1 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
+          className="ml-auto cursor-pointer rounded-[4px] px-phi-3 py-phi-2 text-button font-normal leading-none text-muted-foreground transition-colors duration-150 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
         >
           追加
         </button>

@@ -12,13 +12,15 @@ export function TaskList() {
 
   if (isLoading) {
     return (
-      <p className="px-1 py-6 text-sm text-muted-foreground">読み込み中...</p>
+      <p className="px-phi-2 py-phi-5 text-body text-muted-foreground">
+        読み込み中...
+      </p>
     );
   }
 
   if (!isSuccess) {
     return (
-      <p className="px-1 py-6 text-sm text-destructive">
+      <p className="px-phi-2 py-phi-5 text-body text-destructive">
         タスクの読み込みに失敗しました。
       </p>
     );
@@ -36,28 +38,28 @@ export function TaskList() {
 
   if (tasks.length === 0) {
     return (
-      <p className="px-1 py-8 text-sm text-muted-foreground">
+      <p className="px-phi-2 py-phi-6 text-body text-muted-foreground">
         まだタスクがありません。上から追加してください。
       </p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-phi-2">
       <ul className="flex flex-col">
         {tasks.map((task) => (
           <TaskListItem task={task} key={task.id} />
         ))}
       </ul>
-      <div className="mt-4 flex items-center justify-between gap-4 px-1">
-        <div className="text-sm text-muted-foreground">
+      <div className="mt-phi-4 flex items-center justify-between gap-phi-4 px-phi-2">
+        <div className="text-caption text-muted-foreground">
           <span>{tasks.length} 件</span>
-          <span className="mx-2">·</span>
+          <span className="mx-phi-3">·</span>
           <span>{completedTasks.length} 件完了</span>
         </div>
         {completedTasks.length > 0 && (
           <Button
-            className="flex items-center gap-2"
+            className="flex items-center gap-phi-3"
             size="sm"
             variant="ghost"
             onClick={handleDeleteCompletedTasks}
