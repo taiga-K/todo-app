@@ -12,9 +12,10 @@ import { PriorityIcon } from "./PriorityIcon";
 
 interface TaskListItemProps {
   task: TaskWithTags;
+  onDoneChange: (taskId: string, isDone: boolean) => void | Promise<void>;
 }
 
-export function TaskListItem({ task }: TaskListItemProps) {
+export function TaskListItem({ task, onDoneChange }: TaskListItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(task.description);
   // Keep the committed title visible until getTasks refreshes the cache.
@@ -42,17 +43,6 @@ export function TaskListItem({ task }: TaskListItemProps) {
       setDraft(displayedDescription);
     }
   }, [displayedDescription, isEditing]);
-
-  async function setTaskDone(isDone: boolean): Promise<void> {
-    try {
-      await updateTask({
-        id: task.id,
-        isDone,
-      });
-    } catch (err: unknown) {
-      window.alert(`タスクの更新中にエラーが発生しました: ${String(err)}`);
-    }
-  }
 
   async function commitDescription(): Promise<void> {
     if (skipCommitRef.current) {
@@ -105,7 +95,9 @@ export function TaskListItem({ task }: TaskListItemProps) {
       >
         <Checkbox
           checked={task.isDone}
-          onCheckedChange={(checked) => setTaskDone(checked === true)}
+          onCheckedChange={(checked) => {
+            void onDoneChange(task.id, checked === true);
+          }}
           aria-label={displayedDescription}
           className="mt-phi-1 cursor-pointer rounded-full after:inset-0"
         />
