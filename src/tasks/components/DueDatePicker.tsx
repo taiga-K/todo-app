@@ -69,7 +69,14 @@ export function DueDatePicker({ value, onChange }: DueDatePickerProps) {
             mode="single"
             locale={ja}
             selected={value ?? undefined}
-            onSelect={(date) => onChange(toDueDate(date))}
+            onSelect={(date) => {
+              // Single-select mode toggles the selected day to undefined;
+              // only the explicit クリア control should clear the due date.
+              if (date == null) {
+                return;
+              }
+              onChange(toDueDate(date));
+            }}
             labels={{
               labelPrevious: () => "前の月",
               labelNext: () => "次の月",
