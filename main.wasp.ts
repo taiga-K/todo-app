@@ -5,6 +5,10 @@ import { LoginPage } from "./src/auth/email/LoginPage" with { type: "ref" };
 import { PasswordResetPage } from "./src/auth/email/PasswordResetPage" with { type: "ref" };
 import { RequestPasswordResetPage } from "./src/auth/email/RequestPasswordResetPage" with { type: "ref" };
 import { SignupPage } from "./src/auth/email/SignupPage" with { type: "ref" };
+import {
+  getPasswordResetEmailContent,
+  getVerificationEmailContent,
+} from "./src/auth/email/emailContent" with { type: "ref" };
 import { userSignupFields } from "./src/auth/email/userSignupFields" with { type: "ref" };
 import { tagsSpec } from "./src/tags/tags.wasp";
 import { tasksSpec } from "./src/tasks/task.wasp";
@@ -28,9 +32,11 @@ export default app({
         userSignupFields,
         emailVerification: {
           clientRoute: "EmailVerificationRoute",
+          getEmailContentFn: getVerificationEmailContent,
         },
         passwordReset: {
           clientRoute: "PasswordResetRoute",
+          getEmailContentFn: getPasswordResetEmailContent,
         },
       },
     },
