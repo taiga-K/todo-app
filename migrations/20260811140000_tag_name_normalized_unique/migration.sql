@@ -1,6 +1,53 @@
--- RedefineTables
+-- Merge per-user tags that differ only by case before enforcing
+-- case-insensitive uniqueness on nameNormalized.
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
+
+-- Point task links from duplicate tags to the kept tag (lowest id per group).
+UPDATE "_TagToTask"
+SET "A" = (
+  SELECT keeper.id
+  FROM "Tag" AS duplicate
+  JOIN "Tag" AS keeper
+    ON keeper."userId" = duplicate."userId"
+   AND lower(keeper."name") = lower(duplicate."name")
+  WHERE duplicate."id" = "_TagToTask"."A"
+  ORDER BY keeper."id"
+  LIMIT 1
+)
+WHERE "A" IN (
+  SELECT t."id"
+  FROM "Tag" AS t
+  WHERE EXISTS (
+    SELECT 1
+    FROM "Tag" AS o
+    WHERE o."userId" = t."userId"
+      AND lower(o."name") = lower(t."name")
+      AND o."id" < t."id"
+  )
+);
+
+-- Collapse any duplicate junction rows created by the remapping.
+DELETE FROM "_TagToTask"
+WHERE "rowid" NOT IN (
+  SELECT MIN("rowid") FROM "_TagToTask" GROUP BY "A", "B"
+);
+
+-- Drop the duplicate tags themselves.
+DELETE FROM "Tag"
+WHERE "id" IN (
+  SELECT t."id"
+  FROM "Tag" AS t
+  WHERE EXISTS (
+    SELECT 1
+    FROM "Tag" AS o
+    WHERE o."userId" = t."userId"
+      AND lower(o."name") = lower(t."name")
+      AND o."id" < t."id"
+  )
+);
+
+-- RedefineTables
 CREATE TABLE "new_Tag" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
