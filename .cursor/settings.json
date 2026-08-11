@@ -1,0 +1,13 @@
+{
+  "plugins": {
+    "ui-ux-pro-max-skill/ui-ux-pro-max": {
+      "enabled": true
+    },
+    "shadcn": {
+      "enabled": true
+    },
+    "magicpath": {
+      "enabled": true
+    }
+  }
+}
