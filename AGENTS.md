@@ -185,3 +185,15 @@ If you don't have full debugging visibility as described in the [Start a Wasp De
 | Types stale/IDE errors after changes                         | Restart TS server `Cmd+Shift+P`                                                                           |
 | Wasp not recognizing changes                                 | **WAIT PATIENTLY** as Wasp recompiles the project. Re-run `wasp start` if necessary.                      |
 | Persistent weirdness after waiting patiently and restarting. | Run `wasp clean` && `wasp start`                                                                          |
+
+## Cursor Cloud specific instructions
+
+Durable, non-obvious notes for running this Wasp app in the Cloud Agent VM. The VM already has the toolchain installed (Node 24 + Wasp CLI); the startup update script runs `wasp install` to refresh dependencies.
+
+- **Node version is critical.** Wasp CLI `0.25` requires Node `>= 24.14.1`. The base image also ships a `/exec-daemon/node` (Node 22) shim that is *earlier* in `PATH`. Node 24 is installed via `nvm` and set as the nvm default, and `~/.bashrc` prepends the Node 24 bin dir so it wins in new shells. If `node --version` ever reports v22 (e.g. `wasp` errors with "Node.js version ... is not supported"), run `export PATH="$HOME/.nvm/versions/node/v24.19.0/bin:$PATH"` in that shell.
+- **Dependencies:** use `wasp install`, not a root `npm install`. The root `package.json` `workspaces` point at generated `.wasp/out/*`, so plain npm at the repo root does not install app deps.
+- **`wasp start` runs a strict `tsc` SDK build.** Any TypeScript error anywhere under `src/` aborts startup (the dev server will not come up even though Vite itself is lenient). If `wasp start` fails to serve, check the "Building SDK" section of its output for a `tsc` error first.
+  - Known pre-existing type error as of environment setup: `src/tasks/queries.ts` declares `getTasks` as `GetTasks<void, Task[]>` but returns tasks with `include: { tags: true }`, which `TaskListItem`/`TaskList` consume as `Task & { tags: Tag[] }`. This breaks the SDK build until the return type is widened (e.g. `GetTasks<void, (Task & { tags: Tag[] })[]>`). This is app code, not an environment issue.
+- **Ports:** `wasp start` serves the client on `:3000` and the API server on `:3001`.
+- **Local auth without real email:** the app uses the `Dummy` email provider. Create a gitignored `.env.server` with `SKIP_EMAIL_VERIFICATION_IN_DEV=true` so signup/login work without clicking a verification link. Restart `wasp start` after creating/changing `.env.server`.
+- **Lint:** run `npx eslint src` (scoped to source). Running `npx eslint .` at the repo root also lints generated files under `.wasp/` and produces hundreds of irrelevant errors.
