@@ -8,15 +8,15 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex justify-center border-b border-border bg-background/95 backdrop-blur-sm">
-      <div className="flex w-full max-w-5xl items-center justify-between gap-6 px-[6.18%] py-4">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="flex w-full max-w-5xl items-center justify-between gap-phi-5 px-[6.18%] py-phi-4">
+        <Link to="/" className="flex items-center gap-phi-3">
           <img src={Logo} alt="ToDo App ロゴ" className="size-10" />
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+          <span className="font-heading text-h2 font-semibold tracking-tight">
             ToDo App
-          </h1>
+          </span>
         </Link>
         <nav>
-          <ul className="flex items-center gap-3">
+          <ul className="flex items-center gap-phi-3">
             {user ? (
               <li>
                 <Button onClick={logout} variant="ghost">

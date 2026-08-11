@@ -1,24 +1,40 @@
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { createTask } from "wasp/client/operations";
 import { Input } from "../../components/ui/input";
+import { toDueDate } from "../dueDate";
+import { TaskPriority } from "../priority";
+import { DueDatePicker } from "./DueDatePicker";
+import { LabelPicker } from "./LabelPicker";
+import { PriorityPicker } from "./PriorityPicker";
 
 interface CreateTaskFormValues {
   description: string;
+  tagIds: string[];
+  priority: TaskPriority | null;
+  due: Date | null;
 }
 
 export function CreateTaskForm() {
-  const { handleSubmit, control, reset } = useForm<CreateTaskFormValues>({
-    defaultValues: {
-      description: "",
-    },
-  });
+  const { handleSubmit, setValue, watch, control, reset } =
+    useForm<CreateTaskFormValues>({
+      defaultValues: {
+        description: "",
+        tagIds: [],
+        priority: null,
+        due: null,
+      },
+    });
 
   const onSubmit: SubmitHandler<CreateTaskFormValues> = async (data, event) => {
     event?.stopPropagation();
 
     try {
+      const dueAt = toDueDate(data.due);
       await createTask({
-        description: data.description,
+        description: data.description.trim(),
+        tagIds: data.tagIds,
+        priority: data.priority,
+        dueAt: dueAt ? dueAt.toISOString() : null,
       });
       reset();
     } catch (err: unknown) {
@@ -26,10 +42,12 @@ export function CreateTaskForm() {
     }
   };
 
+  const [tagIds, priority, due] = watch(["tagIds", "priority", "due"]);
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex w-full flex-col gap-1 border-b border-border/70 pb-4"
+      className="flex w-full flex-col gap-phi-2 border-b border-border/70 pb-phi-4"
       id="create-task"
     >
       <Controller
@@ -37,18 +55,20 @@ export function CreateTaskForm() {
         control={control}
         rules={{
           required: { value: true, message: "タスク名を入力してください" },
+          validate: (value) =>
+            value.trim().length > 0 || "タスク名を入力してください",
         }}
         render={({ field, fieldState }) => (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-phi-2">
             <Input
               placeholder="新しいタスク"
               aria-invalid={fieldState.error ? true : undefined}
               aria-label="タスク名"
-              className="h-9 border-0 bg-transparent px-0 text-[15px] shadow-none placeholder:text-muted-foreground/70 focus-visible:border-transparent focus-visible:ring-0"
+              className="h-9 border-0 bg-transparent px-0 text-body shadow-none placeholder:text-muted-foreground/70 focus-visible:border-transparent focus-visible:ring-0"
               {...field}
             />
             {fieldState.error && (
-              <span className="text-xs text-destructive" role="alert">
+              <span className="text-caption text-destructive" role="alert">
                 {fieldState.error.message}
               </span>
             )}
@@ -56,10 +76,26 @@ export function CreateTaskForm() {
         )}
       />
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center gap-x-phi-4 gap-y-phi-2">
+        <DueDatePicker
+          value={due}
+          onChange={(nextDue) => setValue("due", nextDue, { shouldDirty: true })}
+        />
+        <PriorityPicker
+          value={priority}
+          onChange={(nextPriority) =>
+            setValue("priority", nextPriority, { shouldDirty: true })
+          }
+        />
+        <LabelPicker
+          value={tagIds}
+          onChange={(nextTagIds) =>
+            setValue("tagIds", nextTagIds, { shouldDirty: true })
+          }
+        />
         <button
           type="submit"
-          className="cursor-pointer rounded-[4px] px-2 py-1 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
+          className="ml-auto cursor-pointer rounded-[4px] px-phi-3 py-phi-2 text-button font-normal leading-none text-muted-foreground transition-colors duration-150 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
         >
           追加
         </button>
