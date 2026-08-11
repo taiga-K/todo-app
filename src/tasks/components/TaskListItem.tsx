@@ -1,10 +1,12 @@
+import { CalendarIcon } from "lucide-react";
 import { updateTaskStatus } from "wasp/client/operations";
 import { Checkbox } from "../../components/ui/checkbox";
 import { cn } from "../../lib/utils";
-import type { Task } from "wasp/entities";
-import type { Tag } from "wasp/entities";
-
-type TaskWithTags = Task & { tags: Tag[] };
+import { TagLabel } from "../../tags/components/TagLabel";
+import { formatDueLabel, isOverdue } from "../dueDate";
+import { isTaskPriority } from "../priority";
+import { TaskWithTags } from "../queries";
+import { PriorityIcon } from "./PriorityIcon";
 
 interface TaskListItemProps {
   task: TaskWithTags;
@@ -22,6 +24,10 @@ export function TaskListItem({ task }: TaskListItemProps) {
     }
   }
 
+  const priority = isTaskPriority(task.priority) ? task.priority : null;
+  const dueLabel = formatDueLabel(task.dueAt);
+  const overdue = !task.isDone && isOverdue(task.dueAt);
+
   return (
     <li className="border-b border-border/60 last:border-b-0">
       <label
@@ -35,14 +41,43 @@ export function TaskListItem({ task }: TaskListItemProps) {
           onCheckedChange={(checked) => setTaskDone(checked === true)}
           className="mt-0.5 rounded-full"
         />
-        <p
-          className={cn(
-            "min-w-0 flex-1 text-[15px] leading-snug",
-            task.isDone && "text-muted-foreground line-through",
-          )}
-        >
-          {task.description}
-        </p>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 items-start gap-1.5">
+            {priority ? (
+              <PriorityIcon priority={priority} className="mt-0.5 shrink-0" />
+            ) : null}
+            <p
+              className={cn(
+                "min-w-0 flex-1 text-[15px] leading-snug",
+                task.isDone && "text-muted-foreground line-through",
+              )}
+            >
+              {task.description}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {dueLabel ? (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 text-[11px]",
+                  overdue ? "text-red-500" : "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="size-3" />
+                {dueLabel}
+              </span>
+            ) : null}
+            {task.tags.length > 0 && (
+              <ul className="flex flex-wrap gap-1">
+                {task.tags.map((tag) => (
+                  <li key={tag.id}>
+                    <TagLabel tag={tag} isActive={true} size="tiny" />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </label>
     </li>
   );
