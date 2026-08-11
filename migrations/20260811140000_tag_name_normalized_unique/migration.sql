@@ -3,35 +3,32 @@
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
 
--- Point task links from duplicate tags to the kept tag (lowest id per group).
-UPDATE "_TagToTask"
-SET "A" = (
-  SELECT keeper.id
-  FROM "Tag" AS duplicate
-  JOIN "Tag" AS keeper
-    ON keeper."userId" = duplicate."userId"
-   AND lower(keeper."name") = lower(duplicate."name")
-  WHERE duplicate."id" = "_TagToTask"."A"
-  ORDER BY keeper."id"
-  LIMIT 1
-)
-WHERE "A" IN (
-  SELECT t."id"
-  FROM "Tag" AS t
-  WHERE EXISTS (
-    SELECT 1
-    FROM "Tag" AS o
-    WHERE o."userId" = t."userId"
-      AND lower(o."name") = lower(t."name")
-      AND o."id" < t."id"
-  )
+-- Rebuild junction rows with duplicate tags remapped to the keeper id.
+-- DISTINCT avoids unique-index collisions when a task already links to the
+-- keeper and one or more case-variant duplicates.
+CREATE TABLE "new__TagToTask" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+    CONSTRAINT "new__TagToTask_A_fkey" FOREIGN KEY ("A") REFERENCES "Tag" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "new__TagToTask_B_fkey" FOREIGN KEY ("B") REFERENCES "Task" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
-
--- Collapse any duplicate junction rows created by the remapping.
-DELETE FROM "_TagToTask"
-WHERE "rowid" NOT IN (
-  SELECT MIN("rowid") FROM "_TagToTask" GROUP BY "A", "B"
-);
+INSERT INTO "new__TagToTask" ("A", "B")
+SELECT DISTINCT
+  (
+    SELECT keeper."id"
+    FROM "Tag" AS keeper
+    JOIN "Tag" AS original ON original."id" = link."A"
+    WHERE keeper."userId" = original."userId"
+      AND lower(keeper."name") = lower(original."name")
+    ORDER BY keeper."id"
+    LIMIT 1
+  ),
+  link."B"
+FROM "_TagToTask" AS link;
+DROP TABLE "_TagToTask";
+ALTER TABLE "new__TagToTask" RENAME TO "_TagToTask";
+CREATE UNIQUE INDEX "_TagToTask_AB_unique" ON "_TagToTask"("A", "B");
+CREATE INDEX "_TagToTask_B_index" ON "_TagToTask"("B");
 
 -- Drop the duplicate tags themselves.
 DELETE FROM "Tag"
