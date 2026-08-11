@@ -20,10 +20,10 @@ export function SignupPage() {
 
   return (
     <AuthLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold tracking-tight">新規登録</h2>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-phi-5">
+        <div className="flex flex-col gap-phi-2">
+          <h2 className="text-h2 font-semibold tracking-tight">新規登録</h2>
+          <p className="text-caption text-muted-foreground">
             アカウントを作成して、タスク管理を始めましょう。
           </p>
         </div>
@@ -61,9 +61,9 @@ export function SignupPage() {
               },
             );
           }}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-phi-4"
         >
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="signup-username">ユーザー名</Label>
             <Input
               id="signup-username"
@@ -76,7 +76,7 @@ export function SignupPage() {
               disabled={isLoading}
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="signup-email">メールアドレス</Label>
             <Input
               id="signup-email"
@@ -88,7 +88,7 @@ export function SignupPage() {
               disabled={isLoading}
             />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-phi-3">
             <Label htmlFor="signup-password">パスワード</Label>
             <Input
               id="signup-password"
@@ -102,12 +102,12 @@ export function SignupPage() {
           </div>
 
           {error ? (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-caption text-destructive" role="alert">
               {error}
             </p>
           ) : null}
           {success ? (
-            <p className="text-sm text-foreground" role="status">
+            <p className="text-caption text-foreground" role="status">
               {success}
             </p>
           ) : null}
@@ -117,7 +117,7 @@ export function SignupPage() {
           </Button>
         </form>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           すでにアカウントをお持ちの方は{" "}
           <Link
             to="/login"
