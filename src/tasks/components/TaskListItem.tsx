@@ -22,16 +22,18 @@ export function TaskListItem({ task }: TaskListItemProps) {
     string | null
   >(null);
   const skipCommitRef = useRef(false);
+  const commitGenerationRef = useRef(0);
+  const serverDescriptionRef = useRef(task.description);
   const displayedDescription = optimisticDescription ?? task.description;
 
   useEffect(() => {
-    if (
-      optimisticDescription !== null &&
-      task.description === optimisticDescription
-    ) {
+    // Any server description change means the cache caught up (or diverged);
+    // drop optimism so we never mask a different persisted value.
+    if (serverDescriptionRef.current !== task.description) {
+      serverDescriptionRef.current = task.description;
       setOptimisticDescription(null);
     }
-  }, [task.description, optimisticDescription]);
+  }, [task.description]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -68,6 +70,7 @@ export function TaskListItem({ task }: TaskListItemProps) {
     // Exit edit mode before awaiting so later keystrokes are not overwritten
     // by a stale in-flight save of the blur-time value. Show the new title
     // immediately while the tasks query cache catches up.
+    const generation = ++commitGenerationRef.current;
     setOptimisticDescription(next);
     setIsEditing(false);
     try {
@@ -76,6 +79,9 @@ export function TaskListItem({ task }: TaskListItemProps) {
         description: next,
       });
     } catch (err: unknown) {
+      if (generation !== commitGenerationRef.current) {
+        return;
+      }
       setOptimisticDescription(null);
       setDraft(next);
       setIsEditing(true);
