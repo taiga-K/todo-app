@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { getAuthErrorMessage } from "./getAuthErrorMessage";
 
 type AuthSubmitOptions = {
@@ -10,11 +10,17 @@ export function useAuthSubmit() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const inFlightRef = useRef(false);
 
   async function run(
     action: () => Promise<void>,
     options: AuthSubmitOptions = {},
   ): Promise<boolean> {
+    if (inFlightRef.current) {
+      return false;
+    }
+
+    inFlightRef.current = true;
     setIsLoading(true);
     setError(null);
     setSuccess(null);
@@ -30,6 +36,7 @@ export function useAuthSubmit() {
       setError(getAuthErrorMessage(err));
       return false;
     } finally {
+      inFlightRef.current = false;
       setIsLoading(false);
     }
   }

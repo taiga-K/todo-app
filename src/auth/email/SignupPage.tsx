@@ -13,7 +13,8 @@ import {
 import { useAuthSubmit } from "./useAuthSubmit";
 
 export function SignupPage() {
-  const { error, success, isLoading, setError, run } = useAuthSubmit();
+  const { error, success, isLoading, setError, setSuccess, run } =
+    useAuthSubmit();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,6 +32,7 @@ export function SignupPage() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
+            setSuccess(null);
 
             let normalizedUsername: string;
             try {
