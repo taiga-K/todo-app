@@ -21,11 +21,17 @@ export function nextWeek(): Date {
   return startOfDay(nextMonday(new Date()));
 }
 
-export function toDueDate(date: Date | null | undefined): Date | null {
+export function toDueDate(
+  date: Date | string | null | undefined,
+): Date | null {
   if (!date) {
     return null;
   }
-  return startOfDay(date);
+  const value = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(value.getTime())) {
+    return null;
+  }
+  return startOfDay(value);
 }
 
 export function formatDueLabel(

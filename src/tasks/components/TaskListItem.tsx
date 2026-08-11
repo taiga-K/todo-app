@@ -1,14 +1,14 @@
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { updateTask } from "wasp/client/operations";
 import { Checkbox } from "../../components/ui/checkbox";
 import { Input } from "../../components/ui/input";
 import { cn } from "../../lib/utils";
-import { TagLabel } from "../../tags/components/TagLabel";
-import { formatDueLabel, isOverdue } from "../dueDate";
-import { isTaskPriority, priorityMeta } from "../priority";
+import { isOverdue, toDueDate } from "../dueDate";
+import { isTaskPriority, type TaskPriority } from "../priority";
 import { TaskWithTags } from "../queries";
-import { PriorityIcon } from "./PriorityIcon";
+import { DueDatePicker } from "./DueDatePicker";
+import { LabelPicker } from "./LabelPicker";
+import { PriorityPicker } from "./PriorityPicker";
 
 interface TaskListItemProps {
   task: TaskWithTags;
@@ -91,9 +91,44 @@ export function TaskListItem({ task }: TaskListItemProps) {
     }
   }
 
+  async function updateDueAt(due: Date | null): Promise<void> {
+    try {
+      const dueAt = toDueDate(due);
+      await updateTask({
+        id: task.id,
+        dueAt: dueAt ? dueAt.toISOString() : null,
+      });
+    } catch (err: unknown) {
+      window.alert(`期限の更新中にエラーが発生しました: ${String(err)}`);
+    }
+  }
+
+  async function updatePriority(priority: TaskPriority | null): Promise<void> {
+    try {
+      await updateTask({
+        id: task.id,
+        priority,
+      });
+    } catch (err: unknown) {
+      window.alert(`優先度の更新中にエラーが発生しました: ${String(err)}`);
+    }
+  }
+
+  async function updateTagIds(tagIds: string[]): Promise<void> {
+    try {
+      await updateTask({
+        id: task.id,
+        tagIds,
+      });
+    } catch (err: unknown) {
+      window.alert(`ラベルの更新中にエラーが発生しました: ${String(err)}`);
+    }
+  }
+
   const priority = isTaskPriority(task.priority) ? task.priority : null;
-  const dueLabel = formatDueLabel(task.dueAt);
+  const due = toDueDate(task.dueAt);
   const overdue = !task.isDone && isOverdue(task.dueAt);
+  const tagIds = task.tags.map((tag) => tag.id);
 
   return (
     <li className="border-b border-border/60 last:border-b-0">
@@ -144,30 +179,27 @@ export function TaskListItem({ task }: TaskListItemProps) {
               {displayedDescription}
             </button>
           )}
-          {(priority || dueLabel || task.tags.length > 0) && (
-            <div className="flex flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
-              {dueLabel ? (
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-phi-1",
-                    overdue && "text-red-500",
-                  )}
-                >
-                  <CalendarIcon />
-                  {dueLabel}
-                </span>
-              ) : null}
-              {priority ? (
-                <span className="inline-flex items-center gap-phi-1">
-                  <PriorityIcon priority={priority} className="size-3.5" />
-                  {priorityMeta[priority].label}
-                </span>
-              ) : null}
-              {task.tags.map((tag) => (
-                <TagLabel key={tag.id} tag={tag} />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
+            <DueDatePicker
+              value={due}
+              onChange={(nextDue) => {
+                void updateDueAt(nextDue);
+              }}
+              triggerClassName={overdue ? "text-red-500" : undefined}
+            />
+            <PriorityPicker
+              value={priority}
+              onChange={(nextPriority) => {
+                void updatePriority(nextPriority);
+              }}
+            />
+            <LabelPicker
+              value={tagIds}
+              onChange={(nextTagIds) => {
+                void updateTagIds(nextTagIds);
+              }}
+            />
+          </div>
         </div>
       </div>
     </li>
