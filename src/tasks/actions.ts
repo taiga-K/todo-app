@@ -8,18 +8,20 @@ import {
 import { isTaskPriority, type TaskPriority } from "./priority";
 
 type CreateTaskArgs = Pick<Task, "description"> & {
-  tagIds: Tag["id"][];
+  tagIds?: Tag["id"][];
   priority?: string | null;
   dueAt?: string | null;
 };
 
 export const createTask: CreateTask<CreateTaskArgs, Task> = async (
-  { description, tagIds, priority, dueAt },
+  { description, tagIds = [], priority, dueAt },
   context,
 ) => {
   if (!context.user) {
     throw new HttpError(401);
   }
+
+  const uniqueTagIds = [...new Set(tagIds)];
 
   let normalizedPriority: TaskPriority | null = null;
   if (priority != null && priority !== "") {
@@ -38,15 +40,15 @@ export const createTask: CreateTask<CreateTaskArgs, Task> = async (
     normalizedDueAt = parsed;
   }
 
-  if (tagIds.length > 0) {
+  if (uniqueTagIds.length > 0) {
     const ownedTags = await context.entities.Tag.findMany({
       where: {
-        id: { in: tagIds },
+        id: { in: uniqueTagIds },
         userId: context.user.id,
       },
       select: { id: true },
     });
-    if (ownedTags.length !== tagIds.length) {
+    if (ownedTags.length !== uniqueTagIds.length) {
       throw new HttpError(400, "無効なラベルが含まれています");
     }
   }
@@ -63,7 +65,7 @@ export const createTask: CreateTask<CreateTaskArgs, Task> = async (
         },
       },
       tags: {
-        connect: tagIds.map((tagId) => ({
+        connect: uniqueTagIds.map((tagId) => ({
           id: tagId,
         })),
       },
