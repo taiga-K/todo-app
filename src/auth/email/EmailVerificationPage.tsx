@@ -29,20 +29,11 @@ export function EmailVerificationPage() {
 
     async function run() {
       try {
-        const result = await verifyEmail({ token: token! });
-        if (cancelled) {
-          return;
+        // Wasp resolves on success (no `{ success }` payload) and throws on failure.
+        await verifyEmail({ token: token! });
+        if (!cancelled) {
+          setState({ status: "success" });
         }
-
-        if (!result.success) {
-          setState({
-            status: "error",
-            message: result.reason ?? "メール認証に失敗しました。",
-          });
-          return;
-        }
-
-        setState({ status: "success" });
       } catch (err: unknown) {
         if (!cancelled) {
           setState({

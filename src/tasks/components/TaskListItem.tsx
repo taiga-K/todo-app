@@ -51,13 +51,17 @@ export function TaskListItem({ task }: TaskListItemProps) {
       return;
     }
 
+    // Exit edit mode before awaiting so later keystrokes are not overwritten
+    // by a stale in-flight save of the blur-time value.
+    setIsEditing(false);
     try {
       await updateTask({
         id: task.id,
         description: next,
       });
-      setIsEditing(false);
     } catch (err: unknown) {
+      setDraft(next);
+      setIsEditing(true);
       window.alert(`タスク名の更新中にエラーが発生しました: ${String(err)}`);
     }
   }

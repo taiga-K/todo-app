@@ -31,7 +31,7 @@ export function CreateTaskForm() {
     try {
       const dueAt = toDueDate(data.due);
       await createTask({
-        description: data.description,
+        description: data.description.trim(),
         tagIds: data.tagIds,
         priority: data.priority,
         dueAt: dueAt ? dueAt.toISOString() : null,
@@ -55,6 +55,8 @@ export function CreateTaskForm() {
         control={control}
         rules={{
           required: { value: true, message: "タスク名を入力してください" },
+          validate: (value) =>
+            value.trim().length > 0 || "タスク名を入力してください",
         }}
         render={({ field, fieldState }) => (
           <div className="flex flex-col gap-phi-2">
