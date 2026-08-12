@@ -5,6 +5,7 @@ import {
   type CreateTask,
   type UpdateTask,
 } from "wasp/server/operations";
+import { normalizeNotes } from "./notes";
 import { isTaskPriority, type TaskPriority } from "./priority";
 
 type AuthenticatedTaskContext = {
@@ -118,13 +119,14 @@ type UpdateTaskArgs = {
   id: Task["id"];
   isDone?: boolean;
   description?: string;
+  notes?: string;
   priority?: string | null;
   dueAt?: string | null;
   tagIds?: Tag["id"][];
 };
 
 export const updateTask: UpdateTask<UpdateTaskArgs, Task> = async (
-  { id, isDone, description, priority, dueAt, tagIds },
+  { id, isDone, description, notes, priority, dueAt, tagIds },
   context,
 ) => {
   const task = await requireOwnedTask(context, id);
@@ -132,6 +134,7 @@ export const updateTask: UpdateTask<UpdateTaskArgs, Task> = async (
   const data: {
     isDone?: boolean;
     description?: string;
+    notes?: string;
     priority?: TaskPriority | null;
     dueAt?: Date | null;
     tags?: { set: { id: Tag["id"] }[] };
@@ -142,6 +145,9 @@ export const updateTask: UpdateTask<UpdateTaskArgs, Task> = async (
   }
   if (description !== undefined) {
     data.description = requireNonEmptyDescription(description);
+  }
+  if (notes !== undefined) {
+    data.notes = normalizeNotes(notes);
   }
   if (priority !== undefined) {
     if (priority == null || priority === "") {
@@ -194,6 +200,7 @@ export const updateTask: UpdateTask<UpdateTaskArgs, Task> = async (
   if (
     data.isDone === undefined &&
     data.description === undefined &&
+    data.notes === undefined &&
     data.priority === undefined &&
     data.dueAt === undefined &&
     data.tags === undefined
