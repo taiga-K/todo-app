@@ -1,7 +1,7 @@
 import { type AuthUser } from "wasp/auth";
 import { CreateTaskForm } from "./components/CreateTaskForm";
 import { TaskList, type TaskListView } from "./components/TaskList";
-import { startOfToday } from "./dueDate";
+import { useLocalCalendarDay } from "./useLocalCalendarDay";
 
 type TasksViewPageProps = {
   user: AuthUser;
@@ -11,6 +11,7 @@ type TasksViewPageProps = {
 function viewCopy(
   view: TaskListView,
   username: string,
+  today: Date,
 ): {
   title: string;
   description: string;
@@ -30,7 +31,7 @@ function viewCopy(
         title: "Today",
         description: "今日が期限のタスクです。",
         emptyMessage: "今日が期限のタスクはありません。",
-        defaultDue: startOfToday(),
+        defaultDue: today,
       };
     default: {
       const _exhaustive: never = view;
@@ -40,7 +41,8 @@ function viewCopy(
 }
 
 export function TasksViewPage({ user, view }: TasksViewPageProps) {
-  const copy = viewCopy(view, user.username);
+  const today = useLocalCalendarDay();
+  const copy = viewCopy(view, user.username, today);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-phi-5 px-phi-5 py-phi-6 md:px-phi-6">
@@ -53,7 +55,7 @@ export function TasksViewPage({ user, view }: TasksViewPageProps) {
 
       <div className="flex flex-col gap-phi-2">
         <CreateTaskForm defaultDue={copy.defaultDue} />
-        <TaskList view={view} emptyMessage={copy.emptyMessage} />
+        <TaskList view={view} asOf={today} emptyMessage={copy.emptyMessage} />
       </div>
     </div>
   );

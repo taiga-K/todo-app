@@ -1,7 +1,8 @@
+import { useEffect, useRef } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { createTask } from "wasp/client/operations";
 import { Input } from "../../components/ui/input";
-import { toDueDate } from "../dueDate";
+import { shouldSyncDefaultDue, toDueDate } from "../dueDate";
 import { TaskPriority } from "../priority";
 import { DueDatePicker } from "./DueDatePicker";
 import { LabelPicker } from "./LabelPicker";
@@ -19,17 +20,35 @@ type CreateTaskFormProps = {
 };
 
 export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
-  const emptyValues: CreateTaskFormValues = {
-    description: "",
-    tagIds: [],
-    priority: null,
-    due: defaultDue,
-  };
+  const previousDefaultDueRef = useRef(defaultDue);
 
-  const { handleSubmit, setValue, watch, control, reset } =
+  const { handleSubmit, setValue, watch, control, reset, getValues, formState } =
     useForm<CreateTaskFormValues>({
-      defaultValues: emptyValues,
+      defaultValues: {
+        description: "",
+        tagIds: [],
+        priority: null,
+        due: defaultDue,
+      },
     });
+
+  useEffect(() => {
+    const previousDefaultDue = previousDefaultDueRef.current;
+    previousDefaultDueRef.current = defaultDue;
+
+    if (
+      !shouldSyncDefaultDue(
+        getValues("due"),
+        previousDefaultDue,
+        defaultDue,
+        Boolean(formState.dirtyFields.due),
+      )
+    ) {
+      return;
+    }
+
+    setValue("due", defaultDue, { shouldDirty: false });
+  }, [defaultDue, formState.dirtyFields.due, getValues, setValue]);
 
   const onSubmit: SubmitHandler<CreateTaskFormValues> = async (data, event) => {
     event?.stopPropagation();
@@ -42,7 +61,12 @@ export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
         priority: data.priority,
         dueAt: dueAt ? dueAt.toISOString() : null,
       });
-      reset({ ...emptyValues, due: defaultDue });
+      reset({
+        description: "",
+        tagIds: [],
+        priority: null,
+        due: defaultDue,
+      });
     } catch (err: unknown) {
       window.alert(`タスクの作成中にエラーが発生しました: ${String(err)}`);
     }

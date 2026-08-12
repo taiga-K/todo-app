@@ -5,7 +5,7 @@ import {
   useQuery,
 } from "wasp/client/operations";
 import { Button } from "../../shared/components/Button";
-import { isDueToday } from "../dueDate";
+import { isDueToday, startOfToday } from "../dueDate";
 import type { TaskWithTags } from "../queries";
 import { TaskListItem } from "./TaskListItem";
 
@@ -13,15 +13,20 @@ export type TaskListView = "all" | "today";
 
 type TaskListProps = {
   view?: TaskListView;
+  asOf?: Date;
   emptyMessage?: string;
 };
 
-function matchesView(task: TaskWithTags, view: TaskListView): boolean {
+function matchesView(
+  task: TaskWithTags,
+  view: TaskListView,
+  asOf: Date,
+): boolean {
   switch (view) {
     case "all":
       return true;
     case "today":
-      return isDueToday(task.dueAt);
+      return isDueToday(task.dueAt, asOf);
     default: {
       const _exhaustive: never = view;
       return _exhaustive;
@@ -31,8 +36,10 @@ function matchesView(task: TaskWithTags, view: TaskListView): boolean {
 
 export function TaskList({
   view = "all",
+  asOf,
   emptyMessage = "まだタスクがありません。上から追加してください。",
 }: TaskListProps) {
+  const calendarDay = asOf ?? startOfToday();
   const { data: tasks, isLoading, isSuccess } = useQuery(getTasks);
 
   if (isLoading) {
@@ -51,7 +58,9 @@ export function TaskList({
     );
   }
 
-  const visibleTasks = tasks.filter((task) => matchesView(task, view));
+  const visibleTasks = tasks.filter((task) =>
+    matchesView(task, view, calendarDay),
+  );
   const completedTasks = visibleTasks.filter((task) => task.isDone);
   const canClearCompleted = view === "all" && completedTasks.length > 0;
 
