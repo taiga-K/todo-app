@@ -1,15 +1,24 @@
 import { Trash2Icon } from "lucide-react";
-import {
-  deleteCompletedTasks,
-  getTasks,
-  useQuery,
-} from "wasp/client/operations";
+import { deleteCompletedTasks } from "wasp/client/operations";
 import { Button } from "../../shared/components/Button";
+import { TaskWithTags } from "../queries";
 import { TaskListItem } from "./TaskListItem";
 
-export function TaskList() {
-  const { data: tasks, isLoading, isSuccess } = useQuery(getTasks);
+interface TaskListProps {
+  tasks: TaskWithTags[] | undefined;
+  isLoading: boolean;
+  isSuccess: boolean;
+  selectedTaskId: string | null;
+  onSelectTask: (taskId: string) => void;
+}
 
+export function TaskList({
+  tasks,
+  isLoading,
+  isSuccess,
+  selectedTaskId,
+  onSelectTask,
+}: TaskListProps) {
   if (isLoading) {
     return (
       <p className="px-phi-2 py-phi-5 text-body text-muted-foreground">
@@ -18,7 +27,7 @@ export function TaskList() {
     );
   }
 
-  if (!isSuccess) {
+  if (!isSuccess || tasks === undefined) {
     return (
       <p className="px-phi-2 py-phi-5 text-body text-destructive">
         タスクの読み込みに失敗しました。
@@ -48,7 +57,12 @@ export function TaskList() {
     <div className="flex flex-col gap-phi-2">
       <ul className="flex flex-col">
         {tasks.map((task) => (
-          <TaskListItem task={task} key={task.id} />
+          <TaskListItem
+            task={task}
+            key={task.id}
+            isSelected={task.id === selectedTaskId}
+            onSelect={() => onSelectTask(task.id)}
+          />
         ))}
       </ul>
       <div className="mt-phi-4 flex items-center justify-between gap-phi-4 px-phi-2">
