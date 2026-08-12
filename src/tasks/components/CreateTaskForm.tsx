@@ -21,6 +21,8 @@ type CreateTaskFormProps = {
 
 export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
   const previousDefaultDueRef = useRef(defaultDue);
+  const latestDefaultDueRef = useRef(defaultDue);
+  latestDefaultDueRef.current = defaultDue;
 
   const { handleSubmit, setValue, watch, control, reset, getValues, formState } =
     useForm<CreateTaskFormValues>({
@@ -65,7 +67,7 @@ export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
         description: "",
         tagIds: [],
         priority: null,
-        due: defaultDue,
+        due: latestDefaultDueRef.current,
       });
     } catch (err: unknown) {
       window.alert(`タスクの作成中にエラーが発生しました: ${String(err)}`);
