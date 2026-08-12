@@ -5,9 +5,34 @@ import {
   useQuery,
 } from "wasp/client/operations";
 import { Button } from "../../shared/components/Button";
+import { isDueToday } from "../dueDate";
+import type { TaskWithTags } from "../queries";
 import { TaskListItem } from "./TaskListItem";
 
-export function TaskList() {
+export type TaskListView = "all" | "today";
+
+type TaskListProps = {
+  view?: TaskListView;
+  emptyMessage?: string;
+};
+
+function matchesView(task: TaskWithTags, view: TaskListView): boolean {
+  switch (view) {
+    case "all":
+      return true;
+    case "today":
+      return isDueToday(task.dueAt);
+    default: {
+      const _exhaustive: never = view;
+      return _exhaustive;
+    }
+  }
+}
+
+export function TaskList({
+  view = "all",
+  emptyMessage = "まだタスクがありません。上から追加してください。",
+}: TaskListProps) {
   const { data: tasks, isLoading, isSuccess } = useQuery(getTasks);
 
   if (isLoading) {
@@ -26,9 +51,14 @@ export function TaskList() {
     );
   }
 
-  const completedTasks = tasks.filter((task) => task.isDone);
+  const visibleTasks = tasks.filter((task) => matchesView(task, view));
+  const completedTasks = visibleTasks.filter((task) => task.isDone);
+  const canClearCompleted = view === "all" && completedTasks.length > 0;
 
   async function handleDeleteCompletedTasks() {
+    if (view !== "all") {
+      return;
+    }
     try {
       await deleteCompletedTasks();
     } catch (err: unknown) {
@@ -36,10 +66,10 @@ export function TaskList() {
     }
   }
 
-  if (tasks.length === 0) {
+  if (visibleTasks.length === 0) {
     return (
       <p className="px-phi-2 py-phi-6 text-body text-muted-foreground">
-        まだタスクがありません。上から追加してください。
+        {emptyMessage}
       </p>
     );
   }
@@ -47,17 +77,17 @@ export function TaskList() {
   return (
     <div className="flex flex-col gap-phi-2">
       <ul className="flex flex-col">
-        {tasks.map((task) => (
+        {visibleTasks.map((task) => (
           <TaskListItem task={task} key={task.id} />
         ))}
       </ul>
       <div className="mt-phi-4 flex items-center justify-between gap-phi-4 px-phi-2">
         <div className="text-caption text-muted-foreground">
-          <span>{tasks.length} 件</span>
+          <span>{visibleTasks.length} 件</span>
           <span className="mx-phi-3">·</span>
           <span>{completedTasks.length} 件完了</span>
         </div>
-        {completedTasks.length > 0 && (
+        {canClearCompleted && (
           <Button
             className="flex items-center gap-phi-3"
             size="sm"

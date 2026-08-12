@@ -14,15 +14,21 @@ interface CreateTaskFormValues {
   due: Date | null;
 }
 
-export function CreateTaskForm() {
+type CreateTaskFormProps = {
+  defaultDue?: Date | null;
+};
+
+export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
+  const emptyValues: CreateTaskFormValues = {
+    description: "",
+    tagIds: [],
+    priority: null,
+    due: defaultDue,
+  };
+
   const { handleSubmit, setValue, watch, control, reset } =
     useForm<CreateTaskFormValues>({
-      defaultValues: {
-        description: "",
-        tagIds: [],
-        priority: null,
-        due: null,
-      },
+      defaultValues: emptyValues,
     });
 
   const onSubmit: SubmitHandler<CreateTaskFormValues> = async (data, event) => {
@@ -36,7 +42,7 @@ export function CreateTaskForm() {
         priority: data.priority,
         dueAt: dueAt ? dueAt.toISOString() : null,
       });
-      reset();
+      reset({ ...emptyValues, due: defaultDue });
     } catch (err: unknown) {
       window.alert(`タスクの作成中にエラーが発生しました: ${String(err)}`);
     }

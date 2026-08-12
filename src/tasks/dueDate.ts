@@ -71,3 +71,8 @@ export function isOverdue(dueAt: Date | string | null | undefined): boolean {
 
   return startOfDay(value).getTime() < startOfToday().getTime();
 }
+
+export function isDueToday(dueAt: Date | string | null | undefined): boolean {
+  const due = toDueDate(dueAt);
+  return due != null && isToday(due);
+}
