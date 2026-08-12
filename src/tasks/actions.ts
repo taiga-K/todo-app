@@ -167,6 +167,12 @@ export const updateTask: UpdateTask<UpdateTaskArgs, Task> = async (
     if (!context.user) {
       throw new HttpError(401);
     }
+    if (
+      !Array.isArray(tagIds) ||
+      tagIds.some((tagId) => typeof tagId !== "string")
+    ) {
+      throw new HttpError(400, "ラベルが正しくありません");
+    }
     const uniqueTagIds = [...new Set(tagIds)];
     if (uniqueTagIds.length > 0) {
       const ownedTags = await context.entities.Tag.findMany({
