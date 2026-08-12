@@ -51,6 +51,11 @@ export function TaskListItem({ task }: TaskListItemProps) {
   const dueCommitGenerationRef = useRef(0);
   const priorityCommitGenerationRef = useRef(0);
   const tagCommitGenerationRef = useRef(0);
+  // Serialize same-property saves so an older in-flight updateTask cannot
+  // overwrite a newer value after out-of-order completion.
+  const dueSaveChainRef = useRef(Promise.resolve());
+  const prioritySaveChainRef = useRef(Promise.resolve());
+  const tagSaveChainRef = useRef(Promise.resolve());
   const displayedDescription = optimisticDescription ?? task.description;
   const serverPriority = isTaskPriority(task.priority) ? task.priority : null;
   const serverDueAt = toDueDate(task.dueAt);
@@ -162,52 +167,74 @@ export function TaskListItem({ task }: TaskListItemProps) {
     const dueAt = toDueDate(due);
     const generation = ++dueCommitGenerationRef.current;
     setOptimisticDueAt(dueAt);
-    try {
-      await updateTask({
-        id: task.id,
-        dueAt: dueAt ? dueAt.toISOString() : null,
-      });
-    } catch (err: unknown) {
+    dueSaveChainRef.current = dueSaveChainRef.current.then(async () => {
       if (generation !== dueCommitGenerationRef.current) {
         return;
       }
-      setOptimisticDueAt(undefined);
-      window.alert(`期限の更新中にエラーが発生しました: ${String(err)}`);
-    }
+      try {
+        await updateTask({
+          id: task.id,
+          dueAt: dueAt ? dueAt.toISOString() : null,
+        });
+      } catch (err: unknown) {
+        if (generation !== dueCommitGenerationRef.current) {
+          return;
+        }
+        setOptimisticDueAt(undefined);
+        window.alert(`期限の更新中にエラーが発生しました: ${String(err)}`);
+      }
+    });
+    await dueSaveChainRef.current;
   }
 
   async function updatePriority(priority: TaskPriority | null): Promise<void> {
     const generation = ++priorityCommitGenerationRef.current;
     setOptimisticPriority(priority);
-    try {
-      await updateTask({
-        id: task.id,
-        priority,
-      });
-    } catch (err: unknown) {
-      if (generation !== priorityCommitGenerationRef.current) {
-        return;
-      }
-      setOptimisticPriority(undefined);
-      window.alert(`優先度の更新中にエラーが発生しました: ${String(err)}`);
-    }
+    prioritySaveChainRef.current = prioritySaveChainRef.current.then(
+      async () => {
+        if (generation !== priorityCommitGenerationRef.current) {
+          return;
+        }
+        try {
+          await updateTask({
+            id: task.id,
+            priority,
+          });
+        } catch (err: unknown) {
+          if (generation !== priorityCommitGenerationRef.current) {
+            return;
+          }
+          setOptimisticPriority(undefined);
+          window.alert(
+            `優先度の更新中にエラーが発生しました: ${String(err)}`,
+          );
+        }
+      },
+    );
+    await prioritySaveChainRef.current;
   }
 
   async function updateTagIds(tagIds: string[]): Promise<void> {
     const generation = ++tagCommitGenerationRef.current;
     setOptimisticTagIds(tagIds);
-    try {
-      await updateTask({
-        id: task.id,
-        tagIds,
-      });
-    } catch (err: unknown) {
+    tagSaveChainRef.current = tagSaveChainRef.current.then(async () => {
       if (generation !== tagCommitGenerationRef.current) {
         return;
       }
-      setOptimisticTagIds(null);
-      window.alert(`ラベルの更新中にエラーが発生しました: ${String(err)}`);
-    }
+      try {
+        await updateTask({
+          id: task.id,
+          tagIds,
+        });
+      } catch (err: unknown) {
+        if (generation !== tagCommitGenerationRef.current) {
+          return;
+        }
+        setOptimisticTagIds(null);
+        window.alert(`ラベルの更新中にエラーが発生しました: ${String(err)}`);
+      }
+    });
+    await tagSaveChainRef.current;
   }
 
   const overdue = !task.isDone && isOverdue(displayedDueAt);
