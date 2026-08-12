@@ -6,7 +6,11 @@ import {
   TaskDetailPanel,
   type TaskDetailPanelHandle,
 } from "./components/TaskDetailPanel";
-import { TaskList, type TaskListView } from "./components/TaskList";
+import {
+  matchesView,
+  TaskList,
+  type TaskListView,
+} from "./components/TaskList";
 import { useLocalCalendarDay } from "./useLocalCalendarDay";
 
 type TasksViewPageProps = {
@@ -54,16 +58,34 @@ export function TasksViewPage({ user, view }: TasksViewPageProps) {
   const { data: tasks, isLoading, isSuccess } = useQuery(getTasks);
   const selectedTask =
     tasks?.find((task) => task.id === selectedTaskId) ?? null;
+  const selectedTaskInView =
+    selectedTask !== null && matchesView(selectedTask, view, today);
 
   useEffect(() => {
-    if (
-      selectedTaskId !== null &&
-      tasks !== undefined &&
-      !tasks.some((task) => task.id === selectedTaskId)
-    ) {
-      setSelectedTaskId(null);
+    if (selectedTaskId === null || tasks === undefined) {
+      return;
     }
-  }, [tasks, selectedTaskId]);
+    if (selectedTask !== null && selectedTaskInView) {
+      return;
+    }
+
+    let cancelled = false;
+    const close = () => {
+      if (!cancelled) {
+        setSelectedTaskId(null);
+      }
+    };
+
+    if (selectedTask !== null && !selectedTaskInView) {
+      void panelRef.current?.flush().then(close);
+    } else {
+      close();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTask, selectedTaskId, selectedTaskInView, tasks]);
 
   async function selectTask(taskId: string): Promise<void> {
     await panelRef.current?.flush();
