@@ -1,11 +1,5 @@
-import { addDays, startOfDay } from "date-fns";
 import { useEffect, useState } from "react";
-import { startOfToday } from "./dueDate";
-
-function msUntilNextLocalMidnight(now = new Date()): number {
-  const nextMidnight = startOfDay(addDays(now, 1));
-  return Math.max(nextMidnight.getTime() - now.getTime(), 0);
-}
+import { msUntilNextLocalMidnight, startOfToday } from "./dueDate";
 
 /** Re-renders when the local calendar day changes (midnight / focus / visibility). */
 export function useLocalCalendarDay(): Date {
@@ -20,6 +14,7 @@ export function useLocalCalendarDay(): Date {
     }
 
     function scheduleNextBoundary() {
+      window.clearTimeout(timeoutId);
       // Small buffer so we land safely after the local day rolls over.
       const delay = msUntilNextLocalMidnight() + 50;
       timeoutId = window.setTimeout(() => {
@@ -28,14 +23,20 @@ export function useLocalCalendarDay(): Date {
       }, delay);
     }
 
+    function onResume() {
+      refresh();
+      scheduleNextBoundary();
+    }
+
+    refresh();
     scheduleNextBoundary();
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", onResume);
+    document.addEventListener("visibilitychange", onResume);
 
     return () => {
       window.clearTimeout(timeoutId);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", onResume);
+      document.removeEventListener("visibilitychange", onResume);
     };
   }, []);
 

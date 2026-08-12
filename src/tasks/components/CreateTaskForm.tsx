@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { createTask } from "wasp/client/operations";
 import { Input } from "../../components/ui/input";
@@ -22,7 +22,6 @@ type CreateTaskFormProps = {
 export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
   const previousDefaultDueRef = useRef(defaultDue);
   const latestDefaultDueRef = useRef(defaultDue);
-  latestDefaultDueRef.current = defaultDue;
 
   const { handleSubmit, setValue, watch, control, reset, getValues, formState } =
     useForm<CreateTaskFormValues>({
@@ -33,6 +32,10 @@ export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
         due: defaultDue,
       },
     });
+
+  useLayoutEffect(() => {
+    latestDefaultDueRef.current = defaultDue;
+  }, [defaultDue]);
 
   useEffect(() => {
     const previousDefaultDue = previousDefaultDueRef.current;

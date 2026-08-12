@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isDueToday,
+  msUntilNextLocalMidnight,
   shouldSyncDefaultDue,
   startOfToday,
   toDueDate,
@@ -45,5 +46,14 @@ describe("startOfToday", () => {
     expect(today.getHours()).toBe(0);
     expect(today.getMinutes()).toBe(0);
     expect(today.getSeconds()).toBe(0);
+  });
+});
+
+describe("msUntilNextLocalMidnight", () => {
+  it("is near zero just before midnight and near a full day just after", () => {
+    const before = new Date(2026, 7, 12, 23, 59, 50);
+    const after = new Date(2026, 7, 13, 0, 0, 10);
+    expect(msUntilNextLocalMidnight(before)).toBeLessThan(15_000);
+    expect(msUntilNextLocalMidnight(after)).toBeGreaterThan(86_000_000);
   });
 });

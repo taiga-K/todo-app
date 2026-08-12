@@ -13,6 +13,11 @@ export function startOfToday(): Date {
   return startOfDay(new Date());
 }
 
+export function msUntilNextLocalMidnight(now = new Date()): number {
+  const nextMidnight = startOfDay(addDays(now, 1));
+  return Math.max(nextMidnight.getTime() - now.getTime(), 0);
+}
+
 export function tomorrow(): Date {
   return addDays(startOfToday(), 1);
 }
