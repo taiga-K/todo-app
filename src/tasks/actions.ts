@@ -48,6 +48,13 @@ function requireNonEmptyDescription(description: string): string {
   return trimmed;
 }
 
+function requireValidNotes(notes: unknown): string {
+  if (typeof notes !== "string") {
+    throw new HttpError(400, "ノートが正しくありません");
+  }
+  return normalizeNotes(notes);
+}
+
 type CreateTaskArgs = Pick<Task, "description"> & {
   tagIds?: Tag["id"][];
   priority?: string | null;
@@ -147,7 +154,7 @@ export const updateTask: UpdateTask<UpdateTaskArgs, Task> = async (
     data.description = requireNonEmptyDescription(description);
   }
   if (notes !== undefined) {
-    data.notes = normalizeNotes(notes);
+    data.notes = requireValidNotes(notes);
   }
   if (priority !== undefined) {
     if (priority == null || priority === "") {
