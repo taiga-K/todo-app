@@ -11,6 +11,6 @@ export const tasksSpec: Spec = [
   route("TasksRoute", "/", page(TasksPage, { authRequired: true })),
   query(getTasks, { entities: ["Task", "Tag"] }),
   action(createTask, { entities: ["Task", "Tag"] }),
-  action(updateTask, { entities: ["Task"] }),
+  action(updateTask, { entities: ["Task", "Tag"] }),
   action(deleteCompletedTasks, { entities: ["Task"] }),
 ];

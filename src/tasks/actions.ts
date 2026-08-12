@@ -118,22 +118,86 @@ type UpdateTaskArgs = {
   id: Task["id"];
   isDone?: boolean;
   description?: string;
+  priority?: string | null;
+  dueAt?: string | null;
+  tagIds?: Tag["id"][];
 };
 
 export const updateTask: UpdateTask<UpdateTaskArgs, Task> = async (
-  { id, isDone, description },
+  { id, isDone, description, priority, dueAt, tagIds },
   context,
 ) => {
   const task = await requireOwnedTask(context, id);
 
-  const data: { isDone?: boolean; description?: string } = {};
+  const data: {
+    isDone?: boolean;
+    description?: string;
+    priority?: TaskPriority | null;
+    dueAt?: Date | null;
+    tags?: { set: { id: Tag["id"] }[] };
+  } = {};
+
   if (isDone !== undefined) {
     data.isDone = isDone;
   }
   if (description !== undefined) {
     data.description = requireNonEmptyDescription(description);
   }
-  if (data.isDone === undefined && data.description === undefined) {
+  if (priority !== undefined) {
+    if (priority == null || priority === "") {
+      data.priority = null;
+    } else if (!isTaskPriority(priority)) {
+      throw new HttpError(400, "優先度が正しくありません");
+    } else {
+      data.priority = priority;
+    }
+  }
+  if (dueAt !== undefined) {
+    if (dueAt == null || dueAt === "") {
+      data.dueAt = null;
+    } else {
+      const parsed = new Date(dueAt);
+      if (Number.isNaN(parsed.getTime())) {
+        throw new HttpError(400, "期限が正しくありません");
+      }
+      data.dueAt = parsed;
+    }
+  }
+  if (tagIds !== undefined) {
+    if (!context.user) {
+      throw new HttpError(401);
+    }
+    if (
+      !Array.isArray(tagIds) ||
+      tagIds.some((tagId) => typeof tagId !== "string")
+    ) {
+      throw new HttpError(400, "ラベルが正しくありません");
+    }
+    const uniqueTagIds = [...new Set(tagIds)];
+    if (uniqueTagIds.length > 0) {
+      const ownedTags = await context.entities.Tag.findMany({
+        where: {
+          id: { in: uniqueTagIds },
+          userId: context.user.id,
+        },
+        select: { id: true },
+      });
+      if (ownedTags.length !== uniqueTagIds.length) {
+        throw new HttpError(400, "無効なラベルが含まれています");
+      }
+    }
+    data.tags = {
+      set: uniqueTagIds.map((tagId) => ({ id: tagId })),
+    };
+  }
+
+  if (
+    data.isDone === undefined &&
+    data.description === undefined &&
+    data.priority === undefined &&
+    data.dueAt === undefined &&
+    data.tags === undefined
+  ) {
     throw new HttpError(400, "更新内容がありません");
   }
 

@@ -1,17 +1,32 @@
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { updateTask } from "wasp/client/operations";
 import { Checkbox } from "../../components/ui/checkbox";
 import { Input } from "../../components/ui/input";
 import { cn } from "../../lib/utils";
-import { TagLabel } from "../../tags/components/TagLabel";
-import { formatDueLabel, isOverdue } from "../dueDate";
-import { isTaskPriority, priorityMeta } from "../priority";
+import { isOverdue, toDueDate } from "../dueDate";
+import { isTaskPriority, type TaskPriority } from "../priority";
 import { TaskWithTags } from "../queries";
-import { PriorityIcon } from "./PriorityIcon";
+import { DueDatePicker } from "./DueDatePicker";
+import { LabelPicker } from "./LabelPicker";
+import { PriorityPicker } from "./PriorityPicker";
 
 interface TaskListItemProps {
   task: TaskWithTags;
+}
+
+function sameDueAt(a: Date | null, b: Date | null): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+  return a.getTime() === b.getTime();
+}
+
+function sameTagIds(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  const left = new Set(a);
+  return b.every((id) => left.has(id));
 }
 
 export function TaskListItem({ task }: TaskListItemProps) {
@@ -21,9 +36,35 @@ export function TaskListItem({ task }: TaskListItemProps) {
   const [optimisticDescription, setOptimisticDescription] = useState<
     string | null
   >(null);
+  // undefined = no local override; null is a valid cleared due/priority.
+  const [optimisticDueAt, setOptimisticDueAt] = useState<
+    Date | null | undefined
+  >(undefined);
+  const [optimisticPriority, setOptimisticPriority] = useState<
+    TaskPriority | null | undefined
+  >(undefined);
+  const [optimisticTagIds, setOptimisticTagIds] = useState<string[] | null>(
+    null,
+  );
   const skipCommitRef = useRef(false);
   const commitGenerationRef = useRef(0);
+  const dueCommitGenerationRef = useRef(0);
+  const priorityCommitGenerationRef = useRef(0);
+  const tagCommitGenerationRef = useRef(0);
+  // Serialize same-property saves so an older in-flight updateTask cannot
+  // overwrite a newer value after out-of-order completion.
+  const dueSaveChainRef = useRef(Promise.resolve());
+  const prioritySaveChainRef = useRef(Promise.resolve());
+  const tagSaveChainRef = useRef(Promise.resolve());
   const displayedDescription = optimisticDescription ?? task.description;
+  const serverPriority = isTaskPriority(task.priority) ? task.priority : null;
+  const serverDueAt = toDueDate(task.dueAt);
+  const serverTagIds = task.tags.map((tag) => tag.id);
+  const displayedPriority =
+    optimisticPriority !== undefined ? optimisticPriority : serverPriority;
+  const displayedDueAt =
+    optimisticDueAt !== undefined ? optimisticDueAt : serverDueAt;
+  const displayedTagIds = optimisticTagIds ?? serverTagIds;
 
   useEffect(() => {
     // Only drop optimism when the cache has caught up to this value.
@@ -36,6 +77,37 @@ export function TaskListItem({ task }: TaskListItemProps) {
       setOptimisticDescription(null);
     }
   }, [task.description, optimisticDescription]);
+
+  useEffect(() => {
+    if (optimisticDueAt === undefined) {
+      return;
+    }
+    if (sameDueAt(toDueDate(task.dueAt), optimisticDueAt)) {
+      setOptimisticDueAt(undefined);
+    }
+  }, [task.dueAt, optimisticDueAt]);
+
+  useEffect(() => {
+    if (optimisticPriority === undefined) {
+      return;
+    }
+    const nextServerPriority = isTaskPriority(task.priority)
+      ? task.priority
+      : null;
+    if (nextServerPriority === optimisticPriority) {
+      setOptimisticPriority(undefined);
+    }
+  }, [task.priority, optimisticPriority]);
+
+  useEffect(() => {
+    if (optimisticTagIds === null) {
+      return;
+    }
+    const nextServerTagIds = task.tags.map((tag) => tag.id);
+    if (sameTagIds(nextServerTagIds, optimisticTagIds)) {
+      setOptimisticTagIds(null);
+    }
+  }, [task.tags, optimisticTagIds]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -91,9 +163,81 @@ export function TaskListItem({ task }: TaskListItemProps) {
     }
   }
 
-  const priority = isTaskPriority(task.priority) ? task.priority : null;
-  const dueLabel = formatDueLabel(task.dueAt);
-  const overdue = !task.isDone && isOverdue(task.dueAt);
+  async function updateDueAt(due: Date | null): Promise<void> {
+    const dueAt = toDueDate(due);
+    const generation = ++dueCommitGenerationRef.current;
+    setOptimisticDueAt(dueAt);
+    dueSaveChainRef.current = dueSaveChainRef.current.then(async () => {
+      if (generation !== dueCommitGenerationRef.current) {
+        return;
+      }
+      try {
+        await updateTask({
+          id: task.id,
+          dueAt: dueAt ? dueAt.toISOString() : null,
+        });
+      } catch (err: unknown) {
+        if (generation !== dueCommitGenerationRef.current) {
+          return;
+        }
+        setOptimisticDueAt(undefined);
+        window.alert(`期限の更新中にエラーが発生しました: ${String(err)}`);
+      }
+    });
+    await dueSaveChainRef.current;
+  }
+
+  async function updatePriority(priority: TaskPriority | null): Promise<void> {
+    const generation = ++priorityCommitGenerationRef.current;
+    setOptimisticPriority(priority);
+    prioritySaveChainRef.current = prioritySaveChainRef.current.then(
+      async () => {
+        if (generation !== priorityCommitGenerationRef.current) {
+          return;
+        }
+        try {
+          await updateTask({
+            id: task.id,
+            priority,
+          });
+        } catch (err: unknown) {
+          if (generation !== priorityCommitGenerationRef.current) {
+            return;
+          }
+          setOptimisticPriority(undefined);
+          window.alert(
+            `優先度の更新中にエラーが発生しました: ${String(err)}`,
+          );
+        }
+      },
+    );
+    await prioritySaveChainRef.current;
+  }
+
+  async function updateTagIds(tagIds: string[]): Promise<void> {
+    const generation = ++tagCommitGenerationRef.current;
+    setOptimisticTagIds(tagIds);
+    tagSaveChainRef.current = tagSaveChainRef.current.then(async () => {
+      if (generation !== tagCommitGenerationRef.current) {
+        return;
+      }
+      try {
+        await updateTask({
+          id: task.id,
+          tagIds,
+        });
+      } catch (err: unknown) {
+        if (generation !== tagCommitGenerationRef.current) {
+          return;
+        }
+        setOptimisticTagIds(null);
+        window.alert(`ラベルの更新中にエラーが発生しました: ${String(err)}`);
+      }
+    });
+    await tagSaveChainRef.current;
+  }
+
+  const overdue = !task.isDone && isOverdue(displayedDueAt);
 
   return (
     <li className="border-b border-border/60 last:border-b-0">
@@ -144,30 +288,27 @@ export function TaskListItem({ task }: TaskListItemProps) {
               {displayedDescription}
             </button>
           )}
-          {(priority || dueLabel || task.tags.length > 0) && (
-            <div className="flex flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
-              {dueLabel ? (
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-phi-1",
-                    overdue && "text-red-500",
-                  )}
-                >
-                  <CalendarIcon />
-                  {dueLabel}
-                </span>
-              ) : null}
-              {priority ? (
-                <span className="inline-flex items-center gap-phi-1">
-                  <PriorityIcon priority={priority} className="size-3.5" />
-                  {priorityMeta[priority].label}
-                </span>
-              ) : null}
-              {task.tags.map((tag) => (
-                <TagLabel key={tag.id} tag={tag} />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
+            <DueDatePicker
+              value={displayedDueAt}
+              onChange={(nextDue) => {
+                void updateDueAt(nextDue);
+              }}
+              triggerClassName={overdue ? "text-red-500" : undefined}
+            />
+            <PriorityPicker
+              value={displayedPriority}
+              onChange={(nextPriority) => {
+                void updatePriority(nextPriority);
+              }}
+            />
+            <LabelPicker
+              value={displayedTagIds}
+              onChange={(nextTagIds) => {
+                void updateTagIds(nextTagIds);
+              }}
+            />
+          </div>
         </div>
       </div>
     </li>

@@ -24,9 +24,14 @@ const ACCENT = "#FF5A42";
 interface DueDatePickerProps {
   value: Date | null;
   onChange: (value: Date | null) => void;
+  triggerClassName?: string;
 }
 
-export function DueDatePicker({ value, onChange }: DueDatePickerProps) {
+export function DueDatePicker({
+  value,
+  onChange,
+  triggerClassName,
+}: DueDatePickerProps) {
   const [open, setOpen] = useState(false);
   const label = formatDueLabel(value);
 
@@ -34,7 +39,11 @@ export function DueDatePicker({ value, onChange }: DueDatePickerProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <PropertyChip active={Boolean(label)} aria-label="期限を設定" />
+          <PropertyChip
+            active={Boolean(label)}
+            aria-label="期限を設定"
+            className={triggerClassName}
+          />
         }
       >
         <CalendarIcon />
