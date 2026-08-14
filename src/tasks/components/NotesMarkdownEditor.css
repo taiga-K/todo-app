@@ -1,0 +1,118 @@
+/* Google Docs–style notes editor (TipTap): rich text in place, not a preview pane */
+.notes-editor .tiptap {
+  min-height: 8rem;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  font-weight: 400;
+  /* Same as the page subtitle (“大切なことを書き留めて…”) */
+  color: var(--muted-foreground);
+}
+
+.notes-editor .tiptap:focus {
+  outline: none;
+}
+
+.notes-editor .tiptap p {
+  margin-bottom: var(--spacing-phi-3);
+}
+
+.notes-editor .tiptap p:last-child {
+  margin-bottom: 0;
+}
+
+/* Headings: size hierarchy only — detail copy stays regular weight. */
+.notes-editor .tiptap h1 {
+  margin: var(--spacing-phi-5) 0 var(--spacing-phi-3);
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.notes-editor .tiptap h2 {
+  margin: var(--spacing-phi-4) 0 var(--spacing-phi-2);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  font-weight: 400;
+}
+
+.notes-editor .tiptap h3 {
+  margin: var(--spacing-phi-3) 0 var(--spacing-phi-2);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  font-weight: 400;
+}
+
+.notes-editor .tiptap strong {
+  font-weight: 600;
+}
+
+.notes-editor .tiptap h1:first-child,
+.notes-editor .tiptap h2:first-child,
+.notes-editor .tiptap h3:first-child {
+  margin-top: 0;
+}
+
+.notes-editor .tiptap ul {
+  list-style: disc;
+  padding-left: var(--spacing-phi-5);
+  margin-bottom: var(--spacing-phi-3);
+}
+
+.notes-editor .tiptap ol {
+  list-style: decimal;
+  padding-left: var(--spacing-phi-5);
+  margin-bottom: var(--spacing-phi-3);
+}
+
+.notes-editor .tiptap li + li {
+  margin-top: var(--spacing-phi-1);
+}
+
+.notes-editor .tiptap blockquote {
+  margin-bottom: var(--spacing-phi-3);
+  border-left: 2px solid var(--border);
+  padding-left: var(--spacing-phi-4);
+  color: var(--muted-foreground);
+}
+
+.notes-editor .tiptap hr {
+  margin: var(--spacing-phi-5) 0;
+  border: 0;
+  border-top: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+}
+
+.notes-editor .tiptap code {
+  border-radius: 4px;
+  background: var(--muted);
+  padding: 0.05em var(--spacing-phi-1);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--text-caption);
+}
+
+.notes-editor .tiptap pre {
+  margin-bottom: var(--spacing-phi-3);
+  overflow-x: auto;
+  border-radius: 4px;
+  background: var(--muted);
+  padding: var(--spacing-phi-3) var(--spacing-phi-4);
+}
+
+.notes-editor .tiptap pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.notes-editor .tiptap a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.notes-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+}
