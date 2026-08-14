@@ -18,7 +18,7 @@ type TaskListProps = {
   onSelectTask: (taskId: string) => void;
 };
 
-function matchesView(
+export function matchesView(
   task: TaskWithTags,
   view: TaskListView,
   asOf: Date,

@@ -23,15 +23,23 @@ export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
   const previousDefaultDueRef = useRef(defaultDue);
   const latestDefaultDueRef = useRef(defaultDue);
 
-  const { handleSubmit, setValue, watch, control, reset, getValues, formState } =
-    useForm<CreateTaskFormValues>({
-      defaultValues: {
-        description: "",
-        tagIds: [],
-        priority: null,
-        due: defaultDue,
-      },
-    });
+  const {
+    handleSubmit,
+    setValue,
+    watch,
+    control,
+    reset,
+    resetField,
+    getValues,
+    formState,
+  } = useForm<CreateTaskFormValues>({
+    defaultValues: {
+      description: "",
+      tagIds: [],
+      priority: null,
+      due: defaultDue,
+    },
+  });
 
   useLayoutEffect(() => {
     latestDefaultDueRef.current = defaultDue;
@@ -52,8 +60,8 @@ export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
       return;
     }
 
-    setValue("due", defaultDue, { shouldDirty: false });
-  }, [defaultDue, formState.dirtyFields.due, getValues, setValue]);
+    resetField("due", { defaultValue: defaultDue });
+  }, [defaultDue, formState.dirtyFields.due, getValues, resetField]);
 
   const onSubmit: SubmitHandler<CreateTaskFormValues> = async (data, event) => {
     event?.stopPropagation();
