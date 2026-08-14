@@ -202,12 +202,18 @@ export function TaskListItem({
           aria-labelledby={titleId}
           className="absolute inset-0 z-0 rounded-[4px] focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
         />
-        <Checkbox
-          checked={task.isDone}
-          onCheckedChange={(checked) => setTaskDone(checked === true)}
-          aria-label={displayedDescription}
-          className="relative z-10 mt-phi-1 cursor-pointer rounded-full after:inset-0"
-        />
+        <div
+          className="relative z-10 mt-phi-1"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <Checkbox
+            checked={task.isDone}
+            onCheckedChange={(checked) => setTaskDone(checked === true)}
+            aria-label={displayedDescription}
+            className="cursor-pointer rounded-full"
+          />
+        </div>
         <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 flex-col gap-phi-2">
           <p
             id={titleId}
@@ -218,7 +224,7 @@ export function TaskListItem({
           >
             {displayedDescription}
           </p>
-          <div className="pointer-events-auto flex w-fit flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
+          <div className="pointer-events-none flex w-fit flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0 [&_button]:pointer-events-auto">
             <DueDatePicker
               value={displayedDueAt}
               onChange={(nextDue) => {
