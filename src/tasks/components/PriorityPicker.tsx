@@ -54,9 +54,6 @@ export function PriorityPicker({ value, onChange }: PriorityPickerProps) {
             >
               <PriorityIcon priority={priority} className="size-3.5" />
               <span className="flex-1">{meta.label}</span>
-              <span className="text-caption text-muted-foreground">
-                {meta.shortcut}
-              </span>
             </button>
           );
         })}

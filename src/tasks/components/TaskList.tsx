@@ -1,9 +1,5 @@
 import { Trash2Icon } from "lucide-react";
-import {
-  deleteCompletedTasks,
-  getTasks,
-  useQuery,
-} from "wasp/client/operations";
+import { deleteCompletedTasks } from "wasp/client/operations";
 import { Button } from "../../shared/components/Button";
 import { isDueToday, startOfToday } from "../dueDate";
 import type { TaskWithTags } from "../queries";
@@ -15,6 +11,11 @@ type TaskListProps = {
   view?: TaskListView;
   asOf?: Date;
   emptyMessage?: string;
+  tasks: TaskWithTags[] | undefined;
+  isLoading: boolean;
+  isSuccess: boolean;
+  selectedTaskId: string | null;
+  onSelectTask: (taskId: string) => void;
 };
 
 function matchesView(
@@ -38,9 +39,13 @@ export function TaskList({
   view = "all",
   asOf,
   emptyMessage = "まだタスクがありません。上から追加してください。",
+  tasks,
+  isLoading,
+  isSuccess,
+  selectedTaskId,
+  onSelectTask,
 }: TaskListProps) {
   const calendarDay = asOf ?? startOfToday();
-  const { data: tasks, isLoading, isSuccess } = useQuery(getTasks);
 
   if (isLoading) {
     return (
@@ -50,7 +55,7 @@ export function TaskList({
     );
   }
 
-  if (!isSuccess) {
+  if (!isSuccess || tasks === undefined) {
     return (
       <p className="px-phi-2 py-phi-5 text-body text-destructive">
         タスクの読み込みに失敗しました。
@@ -87,7 +92,12 @@ export function TaskList({
     <div className="flex flex-col gap-phi-2">
       <ul className="flex flex-col">
         {visibleTasks.map((task) => (
-          <TaskListItem task={task} key={task.id} />
+          <TaskListItem
+            task={task}
+            key={task.id}
+            isSelected={task.id === selectedTaskId}
+            onSelect={() => onSelectTask(task.id)}
+          />
         ))}
       </ul>
       <div className="mt-phi-4 flex items-center justify-between gap-phi-4 px-phi-2">
