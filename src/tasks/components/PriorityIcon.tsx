@@ -8,9 +8,8 @@ interface PriorityIconProps {
 
 export function PriorityIcon({ priority, className }: PriorityIconProps) {
   const bars = priority ? priorityMeta[priority].bars : 0;
-  const colorClass = priority
-    ? priorityMeta[priority].colorClass
-    : "text-muted-foreground";
+  const colorClass = priority ? priorityMeta[priority].colorClass : undefined;
+  const unset = bars === 0;
 
   return (
     <svg
@@ -25,7 +24,7 @@ export function PriorityIcon({ priority, className }: PriorityIconProps) {
         width="3"
         height="4"
         rx="0.75"
-        className={cn(bars >= 1 ? "opacity-100" : "opacity-25")}
+        className={cn(unset || bars >= 1 ? "opacity-100" : "opacity-25")}
       />
       <rect
         x="6.5"
@@ -33,7 +32,7 @@ export function PriorityIcon({ priority, className }: PriorityIconProps) {
         width="3"
         height="8"
         rx="0.75"
-        className={cn(bars >= 2 ? "opacity-100" : "opacity-25")}
+        className={cn(unset || bars >= 2 ? "opacity-100" : "opacity-25")}
       />
       <rect
         x="11"
@@ -41,7 +40,7 @@ export function PriorityIcon({ priority, className }: PriorityIconProps) {
         width="3"
         height="12"
         rx="0.75"
-        className={cn(bars >= 3 ? "opacity-100" : "opacity-25")}
+        className={cn(unset || bars >= 3 ? "opacity-100" : "opacity-25")}
       />
     </svg>
   );
