@@ -1,7 +1,8 @@
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { createTask } from "wasp/client/operations";
 import { Input } from "../../components/ui/input";
-import { toDueDate } from "../dueDate";
+import { shouldSyncDefaultDue, toDueDate } from "../dueDate";
 import { TaskPriority } from "../priority";
 import { DueDatePicker } from "./DueDatePicker";
 import { LabelPicker } from "./LabelPicker";
@@ -14,16 +15,45 @@ interface CreateTaskFormValues {
   due: Date | null;
 }
 
-export function CreateTaskForm() {
-  const { handleSubmit, setValue, watch, control, reset } =
+type CreateTaskFormProps = {
+  defaultDue?: Date | null;
+};
+
+export function CreateTaskForm({ defaultDue = null }: CreateTaskFormProps) {
+  const previousDefaultDueRef = useRef(defaultDue);
+  const latestDefaultDueRef = useRef(defaultDue);
+
+  const { handleSubmit, setValue, watch, control, reset, getValues, formState } =
     useForm<CreateTaskFormValues>({
       defaultValues: {
         description: "",
         tagIds: [],
         priority: null,
-        due: null,
+        due: defaultDue,
       },
     });
+
+  useLayoutEffect(() => {
+    latestDefaultDueRef.current = defaultDue;
+  }, [defaultDue]);
+
+  useEffect(() => {
+    const previousDefaultDue = previousDefaultDueRef.current;
+    previousDefaultDueRef.current = defaultDue;
+
+    if (
+      !shouldSyncDefaultDue(
+        getValues("due"),
+        previousDefaultDue,
+        defaultDue,
+        Boolean(formState.dirtyFields.due),
+      )
+    ) {
+      return;
+    }
+
+    setValue("due", defaultDue, { shouldDirty: false });
+  }, [defaultDue, formState.dirtyFields.due, getValues, setValue]);
 
   const onSubmit: SubmitHandler<CreateTaskFormValues> = async (data, event) => {
     event?.stopPropagation();
@@ -36,7 +66,12 @@ export function CreateTaskForm() {
         priority: data.priority,
         dueAt: dueAt ? dueAt.toISOString() : null,
       });
-      reset();
+      reset({
+        description: "",
+        tagIds: [],
+        priority: null,
+        due: latestDefaultDueRef.current,
+      });
     } catch (err: unknown) {
       window.alert(`タスクの作成中にエラーが発生しました: ${String(err)}`);
     }
