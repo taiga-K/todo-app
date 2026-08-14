@@ -54,6 +54,7 @@ export function TaskListItem({
   const prioritySaveChainRef = useRef(Promise.resolve());
   const tagSaveChainRef = useRef(Promise.resolve());
   const displayedDescription = task.description;
+  const titleId = `task-title-${task.id}`;
   const serverPriority = isTaskPriority(task.priority) ? task.priority : null;
   const serverDueAt = toDueDate(task.dueAt);
   const serverTagIds = task.tags.map((tag) => tag.id);
@@ -190,29 +191,34 @@ export function TaskListItem({
     >
       <div
         className={cn(
-          "flex w-full items-start gap-phi-3 rounded-[4px] px-phi-2 py-phi-3 transition-colors duration-150 hover:bg-muted/40",
+          "relative flex w-full cursor-pointer items-start gap-phi-3 rounded-[4px] px-phi-2 py-phi-3 transition-colors duration-150 hover:bg-muted/40",
           isSelected && "bg-muted/50",
         )}
       >
+        <button
+          type="button"
+          onClick={onSelect}
+          aria-pressed={isSelected}
+          aria-labelledby={titleId}
+          className="absolute inset-0 z-0 rounded-[4px] focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
+        />
         <Checkbox
           checked={task.isDone}
           onCheckedChange={(checked) => setTaskDone(checked === true)}
           aria-label={displayedDescription}
-          className="mt-phi-1 cursor-pointer rounded-full after:inset-0"
+          className="relative z-10 mt-phi-1 cursor-pointer rounded-full after:inset-0"
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-phi-2">
-          <button
-            type="button"
-            onClick={onSelect}
-            aria-pressed={isSelected}
+        <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 flex-col gap-phi-2">
+          <p
+            id={titleId}
             className={cn(
-              "min-w-0 w-full cursor-pointer rounded-[2px] text-left text-body focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none",
+              "min-w-0 text-body",
               task.isDone && "text-muted-foreground line-through",
             )}
           >
             {displayedDescription}
-          </button>
-          <div className="flex flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
+          </p>
+          <div className="pointer-events-auto flex w-fit flex-wrap items-center gap-x-phi-4 gap-y-phi-2 text-caption leading-none text-muted-foreground [&_svg]:size-3.5 [&_svg]:shrink-0">
             <DueDatePicker
               value={displayedDueAt}
               onChange={(nextDue) => {
