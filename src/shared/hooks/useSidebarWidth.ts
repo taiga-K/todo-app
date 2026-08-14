@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -42,17 +43,33 @@ export function useSidebarWidth() {
   const [width, setWidth] = useState(() => readStoredWidth());
   const [isResizing, setIsResizing] = useState(false);
   const widthRef = useRef(width);
+  const activeResizeCleanupRef = useRef<
+    ((shouldUpdateState: boolean) => void) | null
+  >(null);
   widthRef.current = width;
+
+  useEffect(
+    () => () => {
+      activeResizeCleanupRef.current?.(false);
+    },
+    [],
+  );
 
   function onResizePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0) {
       return;
     }
     event.preventDefault();
+    activeResizeCleanupRef.current?.(true);
+
     const handle = event.currentTarget;
+    const pointerId = event.pointerId;
     const startX = event.clientX;
     const startWidth = widthRef.current;
-    handle.setPointerCapture(event.pointerId);
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+
+    handle.setPointerCapture(pointerId);
     setIsResizing(true);
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
@@ -63,20 +80,44 @@ export function useSidebarWidth() {
       setWidth(next);
     }
 
-    function onPointerUp(upEvent: PointerEvent) {
-      handle.releasePointerCapture(upEvent.pointerId);
+    let isCleanedUp = false;
+    function cleanupResize(shouldUpdateState: boolean) {
+      if (isCleanedUp) {
+        return;
+      }
+      isCleanedUp = true;
+
       handle.removeEventListener("pointermove", onPointerMove);
-      handle.removeEventListener("pointerup", onPointerUp);
-      handle.removeEventListener("pointercancel", onPointerUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      setIsResizing(false);
+      handle.removeEventListener("pointerup", onPointerEnd);
+      handle.removeEventListener("pointercancel", onPointerEnd);
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+
+      try {
+        if (handle.hasPointerCapture(pointerId)) {
+          handle.releasePointerCapture(pointerId);
+        }
+      } catch {
+        // Capture may already be gone after pointercancel; cleanup must continue.
+      }
+
+      if (activeResizeCleanupRef.current === cleanupResize) {
+        activeResizeCleanupRef.current = null;
+      }
+      if (shouldUpdateState) {
+        setIsResizing(false);
+      }
       persistWidth(widthRef.current);
     }
 
+    function onPointerEnd() {
+      cleanupResize(true);
+    }
+
+    activeResizeCleanupRef.current = cleanupResize;
     handle.addEventListener("pointermove", onPointerMove);
-    handle.addEventListener("pointerup", onPointerUp);
-    handle.addEventListener("pointercancel", onPointerUp);
+    handle.addEventListener("pointerup", onPointerEnd);
+    handle.addEventListener("pointercancel", onPointerEnd);
   }
 
   function onResizeKeyDown(event: KeyboardEvent<HTMLDivElement>) {
