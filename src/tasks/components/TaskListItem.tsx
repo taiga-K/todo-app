@@ -209,7 +209,7 @@ export function TaskListItem({
         >
           <Checkbox
             checked={task.isDone}
-            onCheckedChange={(checked) => setTaskDone(checked === true)}
+            onCheckedChange={(checked) => setTaskDone(checked !== true)}
             aria-label={displayedDescription}
             className="cursor-pointer rounded-full"
           />
